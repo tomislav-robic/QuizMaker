@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuizMaker.API", "QuizMaker.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuizMaker.API.Tests", "QuizMaker.API.Tests\QuizMaker.API.Tests.csproj", "{152A9C7D-CCC0-439B-95D3-A26FD4DDF597}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuizMaker.Core", "QuizMaker.Core\QuizMaker.Core.csproj", "{CBF285C4-1455-4008-A24F-292995B5F28E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{152A9C7D-CCC0-439B-95D3-A26FD4DDF597}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{152A9C7D-CCC0-439B-95D3-A26FD4DDF597}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{152A9C7D-CCC0-439B-95D3-A26FD4DDF597}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CBF285C4-1455-4008-A24F-292995B5F28E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CBF285C4-1455-4008-A24F-292995B5F28E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CBF285C4-1455-4008-A24F-292995B5F28E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CBF285C4-1455-4008-A24F-292995B5F28E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
