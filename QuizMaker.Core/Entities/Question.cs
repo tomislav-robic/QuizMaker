@@ -1,11 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace QuizMaker.Core.Entities
 {
     public class Question
     {
+        [Key]
         public int Id { get; set; }
+
+        [Required]
+        [StringLength(1000)]
         public string Text { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime EditedAt { get; set; } = DateTime.UtcNow;
