@@ -1,12 +1,15 @@
-﻿using System;
+﻿using QuizMaker.Core.Entities;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 
 namespace QuizMaker.Core.Interfaces
 {
     public interface IRepository<T> where T : class
     {
-        void Add(T entity);
-        T GetById(int id);
-        T FirstOrDefault(Expression<Func<T, bool>> predicate);
+        Task AddAsync(T entity);
+        Task<T> GetByIdAsync(int id);
     }
 }

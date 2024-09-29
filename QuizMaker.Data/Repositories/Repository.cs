@@ -3,6 +3,7 @@ using System;
 using System.Data.Entity;
 using System.Linq.Expressions;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace QuizMaker.Data.Repositories
 {
@@ -17,20 +18,15 @@ namespace QuizMaker.Data.Repositories
             _dbSet = _context.Set<T>();
         }
 
-        public void Add(T entity)
+        public async Task AddAsync(T entity)
         {
-            _dbSet.Add(entity);
-            _context.SaveChanges();
+            _dbSet.Add(entity); 
+            await _context.SaveChangesAsync(); 
         }
 
-        public T GetById(int id)
+        public async Task<T> GetByIdAsync(int id)
         {
-            return _dbSet.Find(id);
-        }
-
-        public T FirstOrDefault(Expression<Func<T, bool>> predicate)
-        {
-            return _dbSet.FirstOrDefault(predicate);
+            return await _dbSet.FindAsync(id);
         }
     }
 }

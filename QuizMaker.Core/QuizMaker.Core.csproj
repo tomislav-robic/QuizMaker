@@ -45,15 +45,21 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DTOs\AddTagsDTO.cs" />
     <Compile Include="DTOs\QuizDetailDTO.cs" />
     <Compile Include="DTOs\QuizDTO.cs" />
+    <Compile Include="DTOs\QuizSummaryDTO.cs" />
+    <Compile Include="DTOs\SortedPaginationDTO.cs" />
+    <Compile Include="DTOs\TagsPaginationDTO.cs" />
     <Compile Include="Entities\Question.cs" />
     <Compile Include="Entities\QuestionTag.cs" />
     <Compile Include="Entities\Quiz.cs" />
     <Compile Include="Entities\QuizQuestion.cs" />
     <Compile Include="Entities\QuizTag.cs" />
     <Compile Include="Entities\Tag.cs" />
+    <Compile Include="Interfaces\IQuizRepository.cs" />
     <Compile Include="Interfaces\IRepository.cs" />
+    <Compile Include="Interfaces\ITagRepository.cs" />
     <Compile Include="Interfaces\IUnitOfWork.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

@@ -331,9 +331,15 @@
     <Compile Include="Migrations\202409291542520_AddedDeletedAt.designer.cs">
       <DependentUpon>202409291542520_AddedDeletedAt.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202409291940440_AddEditedAtIndexes.cs" />
+    <Compile Include="Migrations\202409291940440_AddEditedAtIndexes.designer.cs">
+      <DependentUpon>202409291940440_AddEditedAtIndexes.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Repositories\QuizRepository.cs" />
     <Compile Include="Repositories\Repository.cs" />
+    <Compile Include="Repositories\TagRepository.cs" />
     <Compile Include="UnitOfWork.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -358,6 +364,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202409291542520_AddedDeletedAt.resx">
       <DependentUpon>202409291542520_AddedDeletedAt.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202409291940440_AddEditedAtIndexes.resx">
+      <DependentUpon>202409291940440_AddEditedAtIndexes.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

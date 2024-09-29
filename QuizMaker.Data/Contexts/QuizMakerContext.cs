@@ -29,7 +29,10 @@ namespace QuizMaker.Data.Contexts
             modelBuilder.Entity<Quiz>()
                 .HasIndex(q => q.Name)
                 .IsUnique()
-                .HasName("IX_Quiz_Name");  // Ime indeksa
+                .HasName("IX_Quiz_Name");
+            modelBuilder.Entity<Quiz>()
+                .HasIndex(q => q.EditedAt)
+                .HasName("IX_Quiz_EditedAt");
 
             // Konfiguracije za entitet Question
             modelBuilder.Entity<Question>()
@@ -40,7 +43,10 @@ namespace QuizMaker.Data.Contexts
             modelBuilder.Entity<Question>()
                 .HasIndex(q => q.Text)
                 .IsUnique()
-                .HasName("IX_Question_Text");  // Ime indeksa
+                .HasName("IX_Question_Text");
+            modelBuilder.Entity<Question>()
+                .HasIndex(q => q.EditedAt)
+                .HasName("IX_Question_EditedAt");
 
             // Konfiguracije za entitet Tag
             modelBuilder.Entity<Tag>()
@@ -51,7 +57,7 @@ namespace QuizMaker.Data.Contexts
             modelBuilder.Entity<Tag>()
                 .HasIndex(t => t.Name)
                 .IsUnique()
-                .HasName("IX_Tag_Name");  // Ime indeksa
+                .HasName("IX_Tag_Name");  
 
             // Konfiguracije za mnogostruke veze - QuizQuestion
             modelBuilder.Entity<QuizQuestion>()

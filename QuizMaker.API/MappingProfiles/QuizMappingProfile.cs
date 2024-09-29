@@ -17,6 +17,8 @@ namespace QuizMaker.API.MappingProfiles
 
             CreateMap<Quiz, QuizDetailDTO>()
                 .ForMember(dest => dest.Tags, opt => opt.MapFrom(src => src.QuizTags.Select(qt => qt.Tag.Name).ToList()));
+
+            CreateMap<Quiz, QuizSummaryDTO>();
         }
     }
 }

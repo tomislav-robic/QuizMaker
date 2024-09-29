@@ -2,25 +2,26 @@
 using QuizMaker.Core.Interfaces;
 using QuizMaker.Data.Contexts;
 using QuizMaker.Data.Repositories;
+using System.Threading.Tasks;
 
 namespace QuizMaker.Data
 {
     public class UnitOfWork : IUnitOfWork
     {
         private readonly QuizMakerContext _context;
-        public IRepository<Quiz> Quizzes { get; private set; }
-        public IRepository<Tag> Tags { get; private set; }
+        public IQuizRepository Quizzes { get; private set; }
+        public ITagRepository Tags { get; private set; }
 
         public UnitOfWork(QuizMakerContext context)
         {
             _context = context;
-            Quizzes = new Repository<Quiz>(_context);
-            Tags = new Repository<Tag>(_context);
+            Quizzes = new QuizRepository(_context);
+            Tags = new TagRepository(_context);
         }
 
-        public int Complete()
+        public async Task<int> CompleteAsync()
         {
-            return _context.SaveChanges();
+            return await _context.SaveChangesAsync();
         }
 
         public void Dispose()

@@ -10,6 +10,7 @@ using System.Net;
 using System.Net.Http;
 using System.Web.Http;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace QuizMaker.API.Controllers
 {
@@ -21,7 +22,7 @@ namespace QuizMaker.API.Controllers
         // POST: api/quiz
         [HttpPost]
         [Route("")]
-        public HttpResponseMessage CreateQuiz([FromBody] QuizDTO quizCreateDto)
+        public async Task<HttpResponseMessage> CreateQuizAsync([FromBody] QuizDTO quizCreateDto)
         {
             try
             {
@@ -30,8 +31,8 @@ namespace QuizMaker.API.Controllers
 
                 var quiz = _mapper.Map<Quiz>(quizCreateDto);
 
-                _quizMakerDb.Quizzes.Add(quiz);
-                _quizMakerDb.Complete();
+                await _quizMakerDb.Quizzes.AddAsync(quiz);
+                await _quizMakerDb.CompleteAsync();
 
                 return Request.CreateResponse(HttpStatusCode.Created, quiz);
             }
@@ -64,13 +65,13 @@ namespace QuizMaker.API.Controllers
         // GET: api/quiz/{id}
         [HttpGet]
         [Route("{id:int}")]
-        public HttpResponseMessage GetQuiz(int id)
+        public async Task<HttpResponseMessage> GetQuizAsync(int id)
         {
-            var quiz = _quizMakerDb.Quizzes.GetById(id);
+            var quiz = await _quizMakerDb.Quizzes.GetByIdAsync(id);
 
             if (quiz == null)
                 return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Quiz not found.");
-            
+
             if (quiz.DeletedAt != null)
                 return Request.CreateErrorResponse(HttpStatusCode.NotFound, "This quiz is deleted.");
 
@@ -82,11 +83,11 @@ namespace QuizMaker.API.Controllers
         // PUT: api/quiz/{id}
         [HttpPut]
         [Route("{id:int}")]
-        public HttpResponseMessage EditQuiz(int id, [FromBody] QuizDTO quizEditDto)
+        public async Task<HttpResponseMessage> EditQuizAsync(int id, [FromBody] QuizDTO quizEditDto)
         {
             try
             {
-                var quiz = _quizMakerDb.Quizzes.GetById(id);
+                var quiz = await _quizMakerDb.Quizzes.GetByIdAsync(id);
 
                 if (quiz == null)
                     return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Quiz not found.");
@@ -95,7 +96,7 @@ namespace QuizMaker.API.Controllers
                 quiz.Name = quizEditDto.Name;
                 quiz.EditedAt = DateTime.UtcNow;
 
-                _quizMakerDb.Complete();
+                await _quizMakerDb.CompleteAsync();
 
                 return Request.CreateResponse(HttpStatusCode.OK, quiz);
             }
@@ -108,18 +109,18 @@ namespace QuizMaker.API.Controllers
         // DELETE: api/quiz/{id}
         [HttpDelete]
         [Route("{id:int}")]
-        public HttpResponseMessage SoftDeleteQuiz(int id)
+        public async Task<HttpResponseMessage> SoftDeleteQuizAsync(int id)
         {
             try
             {
-                var quiz = _quizMakerDb.Quizzes.GetById(id);
+                var quiz = await _quizMakerDb.Quizzes.GetByIdAsync(id);
 
                 if (quiz == null)
                     return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Quiz not found.");
 
                 // Postavljamo DeletedAt umjesto brisanja iz baze
                 quiz.DeletedAt = DateTime.UtcNow;
-                _quizMakerDb.Complete();
+                await _quizMakerDb.CompleteAsync();
 
                 return Request.CreateResponse(HttpStatusCode.OK, "Quiz soft-deleted successfully.");
             }
@@ -132,11 +133,11 @@ namespace QuizMaker.API.Controllers
         // POST: api/quiz/{id}/revive
         [HttpPost]
         [Route("{id:int}/revive")]
-        public HttpResponseMessage ReviveQuiz(int id)
+        public async Task<HttpResponseMessage> ReviveQuizAsync(int id)
         {
             try
             {
-                var quiz = _quizMakerDb.Quizzes.GetById(id);
+                var quiz = await _quizMakerDb.Quizzes.GetByIdAsync(id);
 
                 if (quiz == null)
                     return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Quiz not found.");
@@ -146,7 +147,7 @@ namespace QuizMaker.API.Controllers
 
                 // Uklanjamo DeletedAt da bi kviz bio aktivan
                 quiz.DeletedAt = null;
-                _quizMakerDb.Complete();
+                await _quizMakerDb.CompleteAsync();
 
                 return Request.CreateResponse(HttpStatusCode.OK, "Quiz revived successfully.");
             }
@@ -159,28 +160,147 @@ namespace QuizMaker.API.Controllers
         // POST: api/quiz/{id}/addTags
         [HttpPost]
         [Route("{id:int}/addTags")]
-        public HttpResponseMessage AddTags(int id, [FromBody] List<string> tags)
+        public async Task<HttpResponseMessage> AddTagsAsync(int id, [FromBody] AddTagsDTO addTagsDto)
         {
             try
             {
-                var quiz = _quizMakerDb.Quizzes.GetById(id);
+                if (addTagsDto == null || string.IsNullOrEmpty(addTagsDto.Tags))
+                    return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "No tags provided.");
+
+                var quiz = await _quizMakerDb.Quizzes.GetByIdAsync(id);
 
                 if (quiz == null)
                     return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Quiz not found.");
 
-                if (tags == null || !tags.Any())
-                    return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "No tags provided.");
+                // Splitamo tagove po ";" i trimamo praznine
+                var tagList = addTagsDto.Tags.Split(';')
+                                             .Select(tag => tag.Trim())
+                                             .Where(tag => !string.IsNullOrEmpty(tag))
+                                             .ToList();
 
-                // Splitamo tagove iz liste i dodajemo ih kvizu
-                foreach (var tagName in tags.Select(tag => tag.Trim()).Where(tag => !string.IsNullOrEmpty(tag)))
+                if (tagList.Count == 0)
+                    return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "No valid tags provided.");
+
+                // Dohvaćamo sve postojeće tagove iz baze koji odgovaraju traženim imenima
+                var existingTags = await _quizMakerDb.Tags.GetExistingTagsAsync(tagList);
+
+                // Prolazimo kroz sve tagove iz liste i dodajemo ih kvizu
+                foreach (var tagName in tagList)
                 {
-                    var tag = _quizMakerDb.Tags.FirstOrDefault(t => t.Name == tagName) ?? new Tag { Name = tagName };
-                    quiz.QuizTags.Add(new QuizTag { Quiz = quiz, Tag = tag });
+                    if (existingTags.TryGetValue(tagName, out var existingTag))
+                    {
+                        // Ako tag postoji, provjeri postoji li već veza s ovim kvizom
+                        var isTagLinked = quiz.QuizTags.Any(qt => qt.TagId == existingTag.Id);
+
+                        if (!isTagLinked)
+                        {
+                            // Ako veza ne postoji, dodajemo novu
+                            quiz.QuizTags.Add(new QuizTag { Quiz = quiz, Tag = existingTag });
+                        }
+                    }
+                    else
+                    {
+                        // Ako tag ne postoji, kreiramo novi
+                        var newTag = new Tag { Name = tagName };
+                        quiz.QuizTags.Add(new QuizTag { Quiz = quiz, Tag = newTag });
+                    }
                 }
 
-                _quizMakerDb.Complete();
+                await _quizMakerDb.CompleteAsync();
 
                 return Request.CreateResponse(HttpStatusCode.OK, $"Tags added successfully to quiz with Id {id}.");
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, $"An error occurred: {ex.Message}");
+            }
+        }
+
+        [HttpPost]
+        [Route("name-sorted")]
+        public async Task<HttpResponseMessage> GetQuizzesNameSortedAsync([FromBody] SortedPaginationDTO dto)
+        {
+            try
+            {
+                // Validacija SortMode vrijednosti
+                if (dto.SortMode != 1 && dto.SortMode != 2)
+                    return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Invalid SortMode. Use 1 for ascending, 2 for descending.");
+
+                // Asinkrono dohvaćamo kvizove iz baze koristeći prilagođenu metodu
+                var quizzes = await _quizMakerDb.Quizzes.GetQuizzesNameSortedAsync(dto.SortMode, dto.ItemsByPage, dto.PageNumber);
+
+                // Koristimo AutoMapper za mapiranje na QuizSummaryDTO
+                var quizDtos = _mapper.Map<List<QuizSummaryDTO>>(quizzes);
+
+                // Ako nema kvizova na traženoj stranici, vraćamo poruku da je stranica prazna
+                if (!quizDtos.Any())
+                    return Request.CreateResponse(HttpStatusCode.OK, "Page is empty.");
+
+                // Vraćamo pronađene kvizove kao odgovor
+                return Request.CreateResponse(HttpStatusCode.OK, quizDtos);
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, $"An error occurred: {ex.Message}");
+            }
+        }
+
+        [HttpPost]
+        [Route("modifiedSorted")]
+        public async Task<HttpResponseMessage> GetQuizzesModifiedSortedAsync([FromBody] SortedPaginationDTO dto)
+        {
+            try
+            {
+                // Validacija SortMode vrijednosti
+                if (dto.SortMode != 1 && dto.SortMode != 2)
+                    return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Invalid sortMode. Use 1 for ascending, 2 for descending.");
+
+                // Asinkrono dohvaćanje kvizova sortirano prema `EditedAt`
+                var quizzes = await _quizMakerDb.Quizzes.GetQuizzesModifiedSortedAsync(dto.SortMode, dto.ItemsByPage, dto.PageNumber);
+
+                // Mapiramo kvizove u QuizSummaryDTO objekte
+                var quizDtos = _mapper.Map<List<QuizSummaryDTO>>(quizzes);
+
+                // Ako nema kvizova na traženoj stranici, vraćamo poruku da je stranica prazna
+                if (!quizDtos.Any())
+                    return Request.CreateResponse(HttpStatusCode.OK, "Page is empty.");
+
+                return Request.CreateResponse(HttpStatusCode.OK, quizDtos);
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, $"An error occurred: {ex.Message}");
+            }
+        }
+
+        [HttpPost]
+        [Route("byTags")]
+        public async Task<HttpResponseMessage> GetQuizzesByTagsAsync([FromBody] TagsPaginationDTO dto)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(dto.Tags))
+                    return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "No tags provided.");
+
+                // Razdvajamo tagove iz stringa i radimo validaciju
+                var tagList = dto.Tags.Split(';')
+                                      .Select(tag => tag.Trim())
+                                      .Where(tag => !string.IsNullOrEmpty(tag))
+                                      .ToList();
+
+                if (tagList.Count == 0)
+                    return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "No valid tags provided.");
+
+                // Asinkrono dohvaćanje kvizova prema tagovima i paginacija
+                var quizzes = await _quizMakerDb.Quizzes.GetQuizzesByTagsAsync(tagList, dto.ItemsByPage, dto.PageNumber);
+
+                // Mapiramo rezultate na DTO
+                var quizDtos = _mapper.Map<List<QuizSummaryDTO>>(quizzes);
+
+                if (!quizDtos.Any())
+                    return Request.CreateResponse(HttpStatusCode.OK, "Page is empty.");
+
+                return Request.CreateResponse(HttpStatusCode.OK, quizDtos);
             }
             catch (Exception ex)
             {
