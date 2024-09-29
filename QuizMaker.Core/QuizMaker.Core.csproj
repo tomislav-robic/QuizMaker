@@ -42,12 +42,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DTOs\QuizCreateDTO.cs" />
     <Compile Include="Entities\Question.cs" />
     <Compile Include="Entities\QuestionTag.cs" />
     <Compile Include="Entities\Quiz.cs" />
     <Compile Include="Entities\QuizQuestion.cs" />
     <Compile Include="Entities\QuizTag.cs" />
     <Compile Include="Entities\Tag.cs" />
+    <Compile Include="Interfaces\IRepository.cs" />
+    <Compile Include="Interfaces\IUnitOfWork.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup />
