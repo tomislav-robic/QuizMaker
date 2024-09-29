@@ -3,11 +3,13 @@ using QuizMaker.Core.DTOs;
 using QuizMaker.Core.Entities;
 using QuizMaker.Core.Interfaces;
 using System;
+using System.Collections.Generic;
 using System.Data.Entity.Infrastructure;
 using System.Data.SqlClient;
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
+using System.Linq;
 
 namespace QuizMaker.API.Controllers
 {
@@ -19,7 +21,7 @@ namespace QuizMaker.API.Controllers
         // POST: api/quiz
         [HttpPost]
         [Route("")]
-        public HttpResponseMessage CreateQuiz([FromBody] QuizCreateDTO quizCreateDto)
+        public HttpResponseMessage CreateQuiz([FromBody] QuizDTO quizCreateDto)
         {
             try
             {
@@ -68,8 +70,122 @@ namespace QuizMaker.API.Controllers
 
             if (quiz == null)
                 return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Quiz not found.");
+            
+            if (quiz.DeletedAt != null)
+                return Request.CreateErrorResponse(HttpStatusCode.NotFound, "This quiz is deleted.");
 
-            return Request.CreateResponse(HttpStatusCode.OK, quiz);
+            var quizDetailDto = _mapper.Map<QuizDetailDTO>(quiz);
+
+            return Request.CreateResponse(HttpStatusCode.OK, quizDetailDto);
+        }
+
+        // PUT: api/quiz/{id}
+        [HttpPut]
+        [Route("{id:int}")]
+        public HttpResponseMessage EditQuiz(int id, [FromBody] QuizDTO quizEditDto)
+        {
+            try
+            {
+                var quiz = _quizMakerDb.Quizzes.GetById(id);
+
+                if (quiz == null)
+                    return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Quiz not found.");
+
+                // Samo mijenjamo naziv i postavljamo EditedAt, bez promjene CreatedAt
+                quiz.Name = quizEditDto.Name;
+                quiz.EditedAt = DateTime.UtcNow;
+
+                _quizMakerDb.Complete();
+
+                return Request.CreateResponse(HttpStatusCode.OK, quiz);
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, $"An error occurred: {ex.Message}");
+            }
+        }
+
+        // DELETE: api/quiz/{id}
+        [HttpDelete]
+        [Route("{id:int}")]
+        public HttpResponseMessage SoftDeleteQuiz(int id)
+        {
+            try
+            {
+                var quiz = _quizMakerDb.Quizzes.GetById(id);
+
+                if (quiz == null)
+                    return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Quiz not found.");
+
+                // Postavljamo DeletedAt umjesto brisanja iz baze
+                quiz.DeletedAt = DateTime.UtcNow;
+                _quizMakerDb.Complete();
+
+                return Request.CreateResponse(HttpStatusCode.OK, "Quiz soft-deleted successfully.");
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, $"An error occurred: {ex.Message}");
+            }
+        }
+
+        // POST: api/quiz/{id}/revive
+        [HttpPost]
+        [Route("{id:int}/revive")]
+        public HttpResponseMessage ReviveQuiz(int id)
+        {
+            try
+            {
+                var quiz = _quizMakerDb.Quizzes.GetById(id);
+
+                if (quiz == null)
+                    return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Quiz not found.");
+
+                if (quiz.DeletedAt == null)
+                    return Request.CreateResponse(HttpStatusCode.BadRequest, "Quiz is not deleted.");
+
+                // Uklanjamo DeletedAt da bi kviz bio aktivan
+                quiz.DeletedAt = null;
+                _quizMakerDb.Complete();
+
+                return Request.CreateResponse(HttpStatusCode.OK, "Quiz revived successfully.");
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, $"An error occurred: {ex.Message}");
+            }
+        }
+
+        // POST: api/quiz/{id}/addTags
+        [HttpPost]
+        [Route("{id:int}/addTags")]
+        public HttpResponseMessage AddTags(int id, [FromBody] List<string> tags)
+        {
+            try
+            {
+                var quiz = _quizMakerDb.Quizzes.GetById(id);
+
+                if (quiz == null)
+                    return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Quiz not found.");
+
+                if (tags == null || !tags.Any())
+                    return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "No tags provided.");
+
+                // Splitamo tagove iz liste i dodajemo ih kvizu
+                foreach (var tagName in tags.Select(tag => tag.Trim()).Where(tag => !string.IsNullOrEmpty(tag)))
+                {
+                    var tag = _quizMakerDb.Tags.FirstOrDefault(t => t.Name == tagName) ?? new Tag { Name = tagName };
+                    quiz.QuizTags.Add(new QuizTag { Quiz = quiz, Tag = tag });
+                }
+
+                _quizMakerDb.Complete();
+
+                return Request.CreateResponse(HttpStatusCode.OK, $"Tags added successfully to quiz with Id {id}.");
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, $"An error occurred: {ex.Message}");
+            }
         }
     }
 }

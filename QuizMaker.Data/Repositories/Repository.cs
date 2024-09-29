@@ -1,5 +1,8 @@
 ﻿using QuizMaker.Core.Interfaces;
+using System;
 using System.Data.Entity;
+using System.Linq.Expressions;
+using System.Linq;
 
 namespace QuizMaker.Data.Repositories
 {
@@ -23,6 +26,11 @@ namespace QuizMaker.Data.Repositories
         public T GetById(int id)
         {
             return _dbSet.Find(id);
+        }
+
+        public T FirstOrDefault(Expression<Func<T, bool>> predicate)
+        {
+            return _dbSet.FirstOrDefault(predicate);
         }
     }
 }

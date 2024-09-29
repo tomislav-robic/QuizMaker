@@ -20,6 +20,7 @@ namespace QuizMaker.Core.Entities
 
         // Veza prema tagovima kroz pomoćnu klasu QuizTag
         public virtual ICollection<QuizTag> QuizTags { get; set; }
+        public DateTime? DeletedAt { get; set; }
     }
 
 }

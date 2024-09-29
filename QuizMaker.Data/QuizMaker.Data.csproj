@@ -327,6 +327,10 @@
     <Compile Include="Migrations\202409282108489_AddFullTextIndex.designer.cs">
       <DependentUpon>202409282108489_AddFullTextIndex.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202409291542520_AddedDeletedAt.cs" />
+    <Compile Include="Migrations\202409291542520_AddedDeletedAt.designer.cs">
+      <DependentUpon>202409291542520_AddedDeletedAt.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Repositories\Repository.cs" />
@@ -351,6 +355,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202409282108489_AddFullTextIndex.resx">
       <DependentUpon>202409282108489_AddFullTextIndex.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202409291542520_AddedDeletedAt.resx">
+      <DependentUpon>202409291542520_AddedDeletedAt.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

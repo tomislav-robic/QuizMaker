@@ -9,11 +9,13 @@ namespace QuizMaker.Data
     {
         private readonly QuizMakerContext _context;
         public IRepository<Quiz> Quizzes { get; private set; }
+        public IRepository<Tag> Tags { get; private set; }
 
         public UnitOfWork(QuizMakerContext context)
         {
             _context = context;
             Quizzes = new Repository<Quiz>(_context);
+            Tags = new Repository<Tag>(_context);
         }
 
         public int Complete()
