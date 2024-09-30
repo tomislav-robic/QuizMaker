@@ -12,6 +12,9 @@ namespace QuizMaker.Core.Entities
         [Required]
         [StringLength(1000)]
         public string Text { get; set; }
+        [Required]
+        [StringLength(1000)]
+        public string Answer { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime EditedAt { get; set; } = DateTime.UtcNow;
 

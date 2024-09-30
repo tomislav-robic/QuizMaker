@@ -12,11 +12,14 @@ namespace QuizMaker.Data
         public IQuizRepository Quizzes { get; private set; }
         public ITagRepository Tags { get; private set; }
 
+        public IRepository<Question> Questions { get; private set; }
+
         public UnitOfWork(QuizMakerContext context)
         {
             _context = context;
             Quizzes = new QuizRepository(_context);
             Tags = new TagRepository(_context);
+            Questions = new Repository<Question>(_context);
         }
 
         public async Task<int> CompleteAsync()

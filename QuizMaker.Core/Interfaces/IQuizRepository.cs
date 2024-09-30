@@ -8,6 +8,5 @@ namespace QuizMaker.Core.Interfaces
     {
         Task<List<Quiz>> GetQuizzesNameSortedAsync(int sortMode, int itemsByPage, int pageNumber);
         Task<List<Quiz>> GetQuizzesModifiedSortedAsync(int sortMode, int itemsByPage, int pageNumber);
-        Task<List<Quiz>> GetQuizzesByTagsAsync(List<string> tags, int itemsByPage, int pageNumber);
     }
 }

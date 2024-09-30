@@ -8,5 +8,7 @@ namespace QuizMaker.Core.Interfaces
     {
         // Metoda za dohvaćanje postojećih tagova po imenima
         Task<Dictionary<string, Tag>> GetExistingTagsAsync(IEnumerable<string> tagNames);
+        // Metoda za dohvaćanje kvizova po tagovima
+        Task<List<Quiz>> GetQuizzesByTagsAsync(List<string> tags, int itemsByPage, int pageNumber);
     }
 }

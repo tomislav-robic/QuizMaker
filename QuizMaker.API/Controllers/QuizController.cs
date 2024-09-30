@@ -106,6 +106,75 @@ namespace QuizMaker.API.Controllers
             }
         }
 
+        // POST: api/quiz/addQuestion
+        [HttpPost]
+        [Route("addQuestion")]
+        public async Task<HttpResponseMessage> AddQuestionToQuizAsync([FromBody] QuestionToQuizDTO dto)
+        {
+            if (dto == null || dto.QuizId == 0 || dto.QuestionId == 0)
+                return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Invalid data.");
+
+            try
+            {
+                var quiz = await _quizMakerDb.Quizzes.GetByIdAsync(dto.QuizId);
+                if (quiz == null)
+                    return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Quiz not found.");
+
+                if (quiz.DeletedAt != null)
+                    return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Quiz is deleted.");
+
+                var question = await _quizMakerDb.Questions.GetByIdAsync(dto.QuestionId);
+                if (question == null)
+                    return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Question not found.");
+
+                var existingLink = quiz.QuizQuestions.Any(qq => qq.QuestionId == dto.QuestionId);
+                if (existingLink)
+                    return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Question already linked to this quiz.");
+
+                quiz.QuizQuestions.Add(new QuizQuestion { QuizId = dto.QuizId, QuestionId = dto.QuestionId });
+                await _quizMakerDb.CompleteAsync();
+
+                return Request.CreateResponse(HttpStatusCode.OK, "Question added to quiz successfully.");
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, "An error occurred: " + ex.Message);
+            }
+        }
+
+        // POST: api/quiz/removeQuestion
+        [HttpPost]
+        [Route("removeQuestion")]
+        public async Task<HttpResponseMessage> RemoveQuestionFromQuizAsync([FromBody] QuestionToQuizDTO dto)
+        {
+            if (dto == null || dto.QuizId == 0 || dto.QuestionId == 0)
+                return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Invalid data.");
+
+            try
+            {
+                var quiz = await _quizMakerDb.Quizzes.GetByIdAsync(dto.QuizId);
+                if (quiz == null)
+                    return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Quiz not found.");
+
+                var question = await _quizMakerDb.Questions.GetByIdAsync(dto.QuestionId);
+                if (question == null)
+                    return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Question not found.");
+
+                var link = quiz.QuizQuestions.FirstOrDefault(qq => qq.QuestionId == dto.QuestionId);
+                if (link == null)
+                    return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Question not linked to this quiz.");
+
+                quiz.QuizQuestions.Remove(link);
+                await _quizMakerDb.CompleteAsync();
+
+                return Request.CreateResponse(HttpStatusCode.OK, "Question removed from quiz successfully.");
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, "An error occurred: " + ex.Message);
+            }
+        }
+
         // DELETE: api/quiz/{id}
         [HttpDelete]
         [Route("{id:int}")]
@@ -216,6 +285,40 @@ namespace QuizMaker.API.Controllers
             }
         }
 
+        // POST: api/quiz/removeTag
+        [HttpPost]
+        [Route("removeTag")]
+        public async Task<HttpResponseMessage> RemoveTagFromQuizAsync([FromBody] TagToQuizDTO dto)
+        {
+            if (dto == null || dto.QuizId == 0 || dto.TagId == 0)
+                return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Invalid data.");
+
+            try
+            {
+                var quiz = await _quizMakerDb.Quizzes.GetByIdAsync(dto.QuizId);
+                if (quiz == null)
+                    return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Quiz not found.");
+
+                var tag = await _quizMakerDb.Tags.GetByIdAsync(dto.TagId);
+                if (tag == null)
+                    return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Tag not found.");
+
+                var link = quiz.QuizTags.FirstOrDefault(qt => qt.TagId == dto.TagId);
+                if (link == null)
+                    return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Tag not linked to this quiz.");
+
+                quiz.QuizTags.Remove(link);
+                await _quizMakerDb.CompleteAsync();
+
+                return Request.CreateResponse(HttpStatusCode.OK, "Tag removed from quiz successfully.");
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, "An error occurred: " + ex.Message);
+            }
+        }
+
+        // POST: api/quiz/name-sorted
         [HttpPost]
         [Route("name-sorted")]
         public async Task<HttpResponseMessage> GetQuizzesNameSortedAsync([FromBody] SortedPaginationDTO dto)
@@ -245,6 +348,7 @@ namespace QuizMaker.API.Controllers
             }
         }
 
+        // POST: api/quiz/modifiedSorted
         [HttpPost]
         [Route("modifiedSorted")]
         public async Task<HttpResponseMessage> GetQuizzesModifiedSortedAsync([FromBody] SortedPaginationDTO dto)
@@ -273,6 +377,7 @@ namespace QuizMaker.API.Controllers
             }
         }
 
+        // POST: api/quiz/byTags
         [HttpPost]
         [Route("byTags")]
         public async Task<HttpResponseMessage> GetQuizzesByTagsAsync([FromBody] TagsPaginationDTO dto)
@@ -292,7 +397,7 @@ namespace QuizMaker.API.Controllers
                     return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "No valid tags provided.");
 
                 // Asinkrono dohvaćanje kvizova prema tagovima i paginacija
-                var quizzes = await _quizMakerDb.Quizzes.GetQuizzesByTagsAsync(tagList, dto.ItemsByPage, dto.PageNumber);
+                var quizzes = await _quizMakerDb.Tags.GetQuizzesByTagsAsync(tagList, dto.ItemsByPage, dto.PageNumber);
 
                 // Mapiramo rezultate na DTO
                 var quizDtos = _mapper.Map<List<QuizSummaryDTO>>(quizzes);

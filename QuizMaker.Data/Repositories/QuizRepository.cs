@@ -42,15 +42,5 @@ namespace QuizMaker.Data.Repositories
                               .Take(itemsByPage)
                               .ToListAsync();
         }
-
-        // Dohvati kvizove prema tagovima
-        public async Task<List<Quiz>> GetQuizzesByTagsAsync(List<string> tags, int itemsByPage, int pageNumber)
-        {
-            return await _dbSet.Where(q => q.DeletedAt == null && q.QuizTags.Any(qt => tags.Contains(qt.Tag.Name)))
-                               .OrderByDescending(q => q.QuizTags.Count(qt => tags.Contains(qt.Tag.Name))) // Sortiraj prema broju tagova koji odgovaraju traženim
-                               .Skip((pageNumber - 1) * itemsByPage)
-                               .Take(itemsByPage)
-                               .ToListAsync();
-        }
     }
 }

@@ -46,11 +46,18 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DTOs\AddTagsDTO.cs" />
+    <Compile Include="DTOs\QuestionCreateDTO.cs" />
+    <Compile Include="DTOs\QuestionDetailDTO.cs" />
+    <Compile Include="DTOs\QuestionSummaryDTO.cs" />
+    <Compile Include="DTOs\QuestionToQuizDTO.cs" />
     <Compile Include="DTOs\QuizDetailDTO.cs" />
     <Compile Include="DTOs\QuizDTO.cs" />
     <Compile Include="DTOs\QuizSummaryDTO.cs" />
     <Compile Include="DTOs\SortedPaginationDTO.cs" />
     <Compile Include="DTOs\TagsPaginationDTO.cs" />
+    <Compile Include="DTOs\TagSummaryDTO.cs" />
+    <Compile Include="DTOs\TagToQuestionDTO.cs" />
+    <Compile Include="DTOs\TagToQuizDTO.cs" />
     <Compile Include="Entities\Question.cs" />
     <Compile Include="Entities\QuestionTag.cs" />
     <Compile Include="Entities\Quiz.cs" />
