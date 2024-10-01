@@ -31,6 +31,7 @@ namespace QuizMaker.API
 
             // Services registration
             container.RegisterType<IQuestionService, QuestionService>();
+            container.RegisterType<IExportService, ExportService>(new HierarchicalLifetimeManager());
 
             // UnityDependencyResolver registration
             GlobalConfiguration.Configuration.DependencyResolver = new UnityDependencyResolver(container);

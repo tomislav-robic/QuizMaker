@@ -54,6 +54,7 @@
     <Compile Include="DTOs\QuizCreateDTO.cs" />
     <Compile Include="DTOs\QuizDetailDTO.cs" />
     <Compile Include="DTOs\QuizDTO.cs" />
+    <Compile Include="DTOs\QuizExportDTO.cs" />
     <Compile Include="DTOs\QuizSummaryDTO.cs" />
     <Compile Include="DTOs\SortedPaginationDTO.cs" />
     <Compile Include="DTOs\TagsPaginationDTO.cs" />
@@ -67,6 +68,8 @@
     <Compile Include="Entities\QuizQuestion.cs" />
     <Compile Include="Entities\QuizTag.cs" />
     <Compile Include="Entities\Tag.cs" />
+    <Compile Include="Interfaces\IExporter.cs" />
+    <Compile Include="Interfaces\IExportService.cs" />
     <Compile Include="Interfaces\IQuestionRepository.cs" />
     <Compile Include="Interfaces\IQuestionService.cs" />
     <Compile Include="Interfaces\IQuizRepository.cs" />
