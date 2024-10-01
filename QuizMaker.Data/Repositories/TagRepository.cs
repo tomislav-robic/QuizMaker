@@ -13,15 +13,13 @@ namespace QuizMaker.Data.Repositories
         {
         }
 
-        // Implementacija metode za dohvaćanje postojećih tagova
         public async Task<Dictionary<string, Tag>> GetExistingTagsAsync(IEnumerable<string> tagNames)
         {
             return await _dbSet
                 .Where(t => tagNames.Contains(t.Name))
-                .ToDictionaryAsync(t => t.Name); // Ovdje koristi asinkronu verziju ToDictionary
+                .ToDictionaryAsync(t => t.Name); 
         }
 
-        // Implementacija metode za dohvaćanje kvizova po tagovima
         public async Task<List<Quiz>> GetQuizzesByTagsAsync(List<string> tags, int itemsByPage, int pageNumber)
         {
             var tagEntities = await _dbSet

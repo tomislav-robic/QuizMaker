@@ -20,7 +20,7 @@ namespace QuizMaker.Data.Contexts
         {
             base.OnModelCreating(modelBuilder);
 
-            // Konfiguracije za entitet Quiz
+            // Configurations for the Quiz entity
             modelBuilder.Entity<Quiz>().ToTable("Quizzes")
                 .HasKey(q => q.Id)
                 .Property(q => q.Name)
@@ -34,21 +34,25 @@ namespace QuizMaker.Data.Contexts
                 .HasIndex(q => q.EditedAt)
                 .HasName("IX_Quiz_EditedAt");
 
-            // Konfiguracije za entitet Question
+            // Configurations for the Question entity
             modelBuilder.Entity<Question>()
                 .HasKey(q => q.Id)
                 .Property(q => q.Text)
                 .IsRequired()
                 .HasMaxLength(1000);
             modelBuilder.Entity<Question>()
-                .HasIndex(q => q.Text)
-                .IsUnique()
-                .HasName("IX_Question_Text");
-            modelBuilder.Entity<Question>()
                 .HasIndex(q => q.EditedAt)
                 .HasName("IX_Question_EditedAt");
+            modelBuilder.Entity<Question>()
+                .Property(q => q.HashValue)
+                .HasMaxLength(64)
+                .IsRequired();
+            modelBuilder.Entity<Question>()
+                .HasIndex(q => q.HashValue)
+                .IsUnique()
+                .HasName("IX_Question_HashValue");
 
-            // Konfiguracije za entitet Tag
+            // Configurations for the Tag entity
             modelBuilder.Entity<Tag>()
                 .HasKey(t => t.Id)
                 .Property(t => t.Name)
@@ -57,9 +61,9 @@ namespace QuizMaker.Data.Contexts
             modelBuilder.Entity<Tag>()
                 .HasIndex(t => t.Name)
                 .IsUnique()
-                .HasName("IX_Tag_Name");  
+                .HasName("IX_Tag_Name");
 
-            // Konfiguracije za mnogostruke veze - QuizQuestion
+            // Configurations for many-to-many relationships - QuizQuestion
             modelBuilder.Entity<QuizQuestion>()
                 .HasKey(qq => new { qq.QuizId, qq.QuestionId });
             modelBuilder.Entity<QuizQuestion>()
@@ -71,7 +75,7 @@ namespace QuizMaker.Data.Contexts
                 .WithMany(q => q.QuizQuestions)
                 .HasForeignKey(qq => qq.QuestionId);
 
-            // Konfiguracije za mnogostruke veze - QuizTag
+            // Configurations for many-to-many relationships - QuizTag
             modelBuilder.Entity<QuizTag>()
                 .HasKey(qt => new { qt.QuizId, qt.TagId });
             modelBuilder.Entity<QuizTag>()
@@ -83,7 +87,7 @@ namespace QuizMaker.Data.Contexts
                 .WithMany(t => t.QuizTags)
                 .HasForeignKey(qt => qt.TagId);
 
-            // Konfiguracije za mnogostruke veze - QuestionTag
+            // Configurations for many-to-many relationships - QuestionTag
             modelBuilder.Entity<QuestionTag>()
                 .HasKey(qt => new { qt.QuestionId, qt.TagId });
             modelBuilder.Entity<QuestionTag>()

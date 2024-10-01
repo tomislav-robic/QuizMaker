@@ -17,48 +17,71 @@ namespace QuizMaker.API.Controllers
     [RoutePrefix("api/quiz")]
     public class QuizController : BaseApiController
     {
-        public QuizController(IUnitOfWork unitOfWork, IMapper mapper) : base(unitOfWork, mapper) { }
+        public QuizController(IUnitOfWork unitOfWork, IMapper mapper, IQuestionService questionService) : base(unitOfWork, mapper, questionService) { }
 
         // POST: api/quiz
         [HttpPost]
         [Route("")]
-        public async Task<HttpResponseMessage> CreateQuizAsync([FromBody] QuizDTO quizCreateDto)
+        public async Task<HttpResponseMessage> CreateQuizWithQuestionsAsync([FromBody] QuizCreateDTO quizCreateDto)
         {
-            try
+            if (quizCreateDto == null || string.IsNullOrEmpty(quizCreateDto.Name))
+                return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Invalid quiz data.");
+
+            using (var transaction = _quizMakerDb.BeginTransaction()) 
             {
-                if (quizCreateDto == null || string.IsNullOrEmpty(quizCreateDto.Name))
-                    return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Invalid quiz data.");
-
-                var quiz = _mapper.Map<Quiz>(quizCreateDto);
-
-                await _quizMakerDb.Quizzes.AddAsync(quiz);
-                await _quizMakerDb.CompleteAsync();
-
-                return Request.CreateResponse(HttpStatusCode.Created, quiz);
-            }
-            catch (DbUpdateException ex)
-            {
-                // Provjera unutarnje SQL iznimke
-                var sqlException = ex.GetBaseException() as SqlException;
-
-                if (sqlException != null)
+                try
                 {
-                    switch (sqlException.Number)
+                    var quiz = _mapper.Map<Quiz>(quizCreateDto);
+                    quiz.QuizQuestions.Clear();
+                    _quizMakerDb.Quizzes.Add(quiz); 
+
+                    if (quizCreateDto.Questions?.Any() == true)
                     {
-                        case 2627: // Unique constraint error
-                        case 547:  // Constraint check violation
-                        case 2601: // Duplicated key row error
-                            return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "A quiz with the same name already exists.");
-                        default:
-                            return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, "A SQL error occurred: " + sqlException.Message);
+                        foreach (var questionCreateDto in quizCreateDto.Questions)
+                        {
+                            if (string.IsNullOrEmpty(questionCreateDto.Text) || string.IsNullOrEmpty(questionCreateDto.Answer))
+                                return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Invalid question data.");
+
+                            var question = _mapper.Map<Question>(questionCreateDto);
+                            question.QuizQuestions = new List<QuizQuestion>
+                            {
+                                new QuizQuestion { QuizId = quiz.Id, Question = question } 
+                             };
+
+                            _questionService.PrepareQuestion(question);
+                            _quizMakerDb.Questions.Add(question); 
+                        }
                     }
+
+                    await _quizMakerDb.CompleteAsync();
+                    transaction.Commit();
+
+                    var quizDetailDto = _mapper.Map<QuizDetailDTO>(quiz);
+                    return Request.CreateResponse(HttpStatusCode.Created, quizDetailDto);
                 }
-                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, "A database error occurred: " + ex.Message);
-            }
-            catch (Exception ex)
-            {
-                // Catch all other errors
-                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, "An error occurred: " + ex.Message);
+                catch (DbUpdateException ex)
+                {
+                    transaction.Rollback(); 
+                    var sqlException = ex.GetBaseException() as SqlException;
+                    if (sqlException != null)
+                    {
+                        switch (sqlException.Number)
+                        {
+                            case 2627:
+                            case 547:
+                            case 2601:
+                                return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "A quiz or a question with the same unique value already exists.");
+                            default:
+                                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, "A SQL error occurred: " + sqlException.Message);
+                        }
+                    }
+                    return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, "A database error occurred: " + ex.Message);
+                }
+                catch (Exception ex)
+                {
+                    transaction.Rollback(); 
+                    return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, "An error occurred: " + ex.Message);
+                }
             }
         }
 
@@ -92,7 +115,6 @@ namespace QuizMaker.API.Controllers
                 if (quiz == null)
                     return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Quiz not found.");
 
-                // Samo mijenjamo naziv i postavljamo EditedAt, bez promjene CreatedAt
                 quiz.Name = quizEditDto.Name;
                 quiz.EditedAt = DateTime.UtcNow;
 
@@ -214,7 +236,6 @@ namespace QuizMaker.API.Controllers
                 if (quiz.DeletedAt == null)
                     return Request.CreateResponse(HttpStatusCode.BadRequest, "Quiz is not deleted.");
 
-                // Uklanjamo DeletedAt da bi kviz bio aktivan
                 quiz.DeletedAt = null;
                 await _quizMakerDb.CompleteAsync();
 
@@ -241,7 +262,6 @@ namespace QuizMaker.API.Controllers
                 if (quiz == null)
                     return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Quiz not found.");
 
-                // Splitamo tagove po ";" i trimamo praznine
                 var tagList = addTagsDto.Tags.Split(';')
                                              .Select(tag => tag.Trim())
                                              .Where(tag => !string.IsNullOrEmpty(tag))
@@ -250,26 +270,21 @@ namespace QuizMaker.API.Controllers
                 if (tagList.Count == 0)
                     return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "No valid tags provided.");
 
-                // Dohvaćamo sve postojeće tagove iz baze koji odgovaraju traženim imenima
                 var existingTags = await _quizMakerDb.Tags.GetExistingTagsAsync(tagList);
 
-                // Prolazimo kroz sve tagove iz liste i dodajemo ih kvizu
                 foreach (var tagName in tagList)
                 {
                     if (existingTags.TryGetValue(tagName, out var existingTag))
                     {
-                        // Ako tag postoji, provjeri postoji li već veza s ovim kvizom
                         var isTagLinked = quiz.QuizTags.Any(qt => qt.TagId == existingTag.Id);
 
                         if (!isTagLinked)
                         {
-                            // Ako veza ne postoji, dodajemo novu
                             quiz.QuizTags.Add(new QuizTag { Quiz = quiz, Tag = existingTag });
                         }
                     }
                     else
                     {
-                        // Ako tag ne postoji, kreiramo novi
                         var newTag = new Tag { Name = tagName };
                         quiz.QuizTags.Add(new QuizTag { Quiz = quiz, Tag = newTag });
                     }
@@ -325,21 +340,16 @@ namespace QuizMaker.API.Controllers
         {
             try
             {
-                // Validacija SortMode vrijednosti
                 if (dto.SortMode != 1 && dto.SortMode != 2)
                     return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Invalid SortMode. Use 1 for ascending, 2 for descending.");
 
-                // Asinkrono dohvaćamo kvizove iz baze koristeći prilagođenu metodu
                 var quizzes = await _quizMakerDb.Quizzes.GetQuizzesNameSortedAsync(dto.SortMode, dto.ItemsByPage, dto.PageNumber);
 
-                // Koristimo AutoMapper za mapiranje na QuizSummaryDTO
                 var quizDtos = _mapper.Map<List<QuizSummaryDTO>>(quizzes);
 
-                // Ako nema kvizova na traženoj stranici, vraćamo poruku da je stranica prazna
                 if (!quizDtos.Any())
                     return Request.CreateResponse(HttpStatusCode.OK, "Page is empty.");
 
-                // Vraćamo pronađene kvizove kao odgovor
                 return Request.CreateResponse(HttpStatusCode.OK, quizDtos);
             }
             catch (Exception ex)
@@ -355,17 +365,13 @@ namespace QuizMaker.API.Controllers
         {
             try
             {
-                // Validacija SortMode vrijednosti
                 if (dto.SortMode != 1 && dto.SortMode != 2)
                     return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Invalid sortMode. Use 1 for ascending, 2 for descending.");
 
-                // Asinkrono dohvaćanje kvizova sortirano prema `EditedAt`
                 var quizzes = await _quizMakerDb.Quizzes.GetQuizzesModifiedSortedAsync(dto.SortMode, dto.ItemsByPage, dto.PageNumber);
 
-                // Mapiramo kvizove u QuizSummaryDTO objekte
                 var quizDtos = _mapper.Map<List<QuizSummaryDTO>>(quizzes);
 
-                // Ako nema kvizova na traženoj stranici, vraćamo poruku da je stranica prazna
                 if (!quizDtos.Any())
                     return Request.CreateResponse(HttpStatusCode.OK, "Page is empty.");
 
@@ -387,7 +393,6 @@ namespace QuizMaker.API.Controllers
                 if (string.IsNullOrEmpty(dto.Tags))
                     return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "No tags provided.");
 
-                // Razdvajamo tagove iz stringa i radimo validaciju
                 var tagList = dto.Tags.Split(';')
                                       .Select(tag => tag.Trim())
                                       .Where(tag => !string.IsNullOrEmpty(tag))
@@ -396,10 +401,8 @@ namespace QuizMaker.API.Controllers
                 if (tagList.Count == 0)
                     return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "No valid tags provided.");
 
-                // Asinkrono dohvaćanje kvizova prema tagovima i paginacija
                 var quizzes = await _quizMakerDb.Tags.GetQuizzesByTagsAsync(tagList, dto.ItemsByPage, dto.PageNumber);
 
-                // Mapiramo rezultate na DTO
                 var quizDtos = _mapper.Map<List<QuizSummaryDTO>>(quizzes);
 
                 if (!quizDtos.Any())

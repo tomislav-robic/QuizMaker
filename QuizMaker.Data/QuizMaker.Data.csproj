@@ -315,6 +315,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Contexts\QuizMakerContext.cs" />
+    <Compile Include="EFTransaction.cs" />
     <Compile Include="Migrations\202409281955507_InitialCreate.cs" />
     <Compile Include="Migrations\202409281955507_InitialCreate.designer.cs">
       <DependentUpon>202409281955507_InitialCreate.cs</DependentUpon>
@@ -338,6 +339,14 @@
     <Compile Include="Migrations\202409301314097_AddAnswerToQuestion.cs" />
     <Compile Include="Migrations\202409301314097_AddAnswerToQuestion.designer.cs">
       <DependentUpon>202409301314097_AddAnswerToQuestion.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\202410011735469_AddHashToQuestion.cs" />
+    <Compile Include="Migrations\202410011735469_AddHashToQuestion.designer.cs">
+      <DependentUpon>202410011735469_AddHashToQuestion.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\202410011928588_AddDeletedAtToQuestion.cs" />
+    <Compile Include="Migrations\202410011928588_AddDeletedAtToQuestion.designer.cs">
+      <DependentUpon>202410011928588_AddDeletedAtToQuestion.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -374,6 +383,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202409301314097_AddAnswerToQuestion.resx">
       <DependentUpon>202409301314097_AddAnswerToQuestion.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202410011735469_AddHashToQuestion.resx">
+      <DependentUpon>202410011735469_AddHashToQuestion.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202410011928588_AddDeletedAtToQuestion.resx">
+      <DependentUpon>202410011928588_AddDeletedAtToQuestion.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

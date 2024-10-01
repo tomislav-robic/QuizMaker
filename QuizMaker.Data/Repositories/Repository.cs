@@ -18,10 +18,9 @@ namespace QuizMaker.Data.Repositories
             _dbSet = _context.Set<T>();
         }
 
-        public async Task AddAsync(T entity)
+        public void Add(T entity)
         {
-            _dbSet.Add(entity); 
-            await _context.SaveChangesAsync(); 
+            _dbSet.Add(entity);
         }
 
         public async Task<T> GetByIdAsync(int id)

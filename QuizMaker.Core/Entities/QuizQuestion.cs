@@ -3,7 +3,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace QuizMaker.Core.Entities
 {
-    // Pomoćne klase za mnogostruke veze
     public class QuizQuestion
     {
         [Key, Column(Order = 0)]

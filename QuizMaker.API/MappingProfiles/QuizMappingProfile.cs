@@ -1,9 +1,7 @@
 ﻿using AutoMapper;
-using AutoMapper.QueryableExtensions;
 using QuizMaker.Core.DTOs;
 using QuizMaker.Core.Entities;
 using System;
-using System.Configuration;
 using System.Linq;
 
 namespace QuizMaker.API.MappingProfiles
@@ -12,10 +10,11 @@ namespace QuizMaker.API.MappingProfiles
     {
         public QuizMappingProfile()
         {
-            CreateMap<QuizDTO, Quiz>()
+            CreateMap<QuizCreateDTO, Quiz>()
+                .ForMember(dest => dest.QuizQuestions, opt => opt.Ignore()) 
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
                 .ForMember(dest => dest.EditedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
-                .ForMember(dest => dest.Id, opt => opt.Ignore()); // Ignoriramo automatsko mapiranje Id-a
+                .ForMember(dest => dest.Id, opt => opt.Ignore());
 
             CreateMap<Quiz, QuizDetailDTO>()
                 .ForMember(dest => dest.Tags, opt => opt.MapFrom(src => src.QuizTags.Select(qt =>
@@ -34,13 +33,13 @@ namespace QuizMaker.API.MappingProfiles
                 })));
 
             CreateMap<Quiz, QuizSummaryDTO>();
-            // Mapiranje iz DTO-a za kreiranje pitanja u entitet
+
             CreateMap<QuestionCreateDTO, Question>()
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
                 .ForMember(dest => dest.EditedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
-                .ForMember(dest => dest.Id, opt => opt.Ignore()); // Ignoriramo Id jer se generira u bazi
+                .ForMember(dest => dest.QuizQuestions, opt => opt.Ignore())
+                .ForMember(dest => dest.Id, opt => opt.Ignore()); 
 
-            // Mapiranje iz entiteta u DTO za detalje pitanja
             CreateMap<Question, QuestionDetailDTO>()
                 .ForMember(dest => dest.Tags, opt => opt.MapFrom(src => src.TagQuestions.Select(tq =>
                 new TagSummaryDTO
@@ -58,6 +57,21 @@ namespace QuizMaker.API.MappingProfiles
                 })));
 
             CreateMap<Question, QuestionSummaryDTO>();
+
+            CreateMap<QuizCreateDTO, Quiz>()
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
+                .ForMember(dest => dest.EditedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
+                .ForMember(dest => dest.Id, opt => opt.Ignore()) 
+                .ForMember(dest => dest.QuizQuestions, opt => opt.MapFrom(src => src.Questions.Select(q => new QuizQuestion
+                {
+                    Question = new Question
+                    {
+                        Text = q.Text,
+                        Answer = q.Answer,
+                        CreatedAt = DateTime.UtcNow,
+                        EditedAt = DateTime.UtcNow
+                    }
+                })));
         }
     }
 }

@@ -289,6 +289,10 @@
       <Project>{7ceb9f0f-4927-4eac-8ecd-4a2f9c1fda61}</Project>
       <Name>QuizMaker.Data</Name>
     </ProjectReference>
+    <ProjectReference Include="..\UseCases\UseCases.csproj">
+      <Project>{8C974AAA-1BB8-4E49-9350-999558C92CAE}</Project>
+      <Name>UseCases</Name>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

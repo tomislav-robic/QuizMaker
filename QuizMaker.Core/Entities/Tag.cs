@@ -12,10 +12,8 @@ namespace QuizMaker.Core.Entities
         [StringLength(255)]
         public string Name { get; set; }
 
-        // Veza prema kvizovima kroz pomoćnu klasu QuizTag
         public virtual ICollection<QuizTag> QuizTags { get; set; }
 
-        // Veza prema pitanjima kroz pomoćnu klasu TagQuestion
         public virtual ICollection<QuestionTag> TagQuestions { get; set; }
     }
 }

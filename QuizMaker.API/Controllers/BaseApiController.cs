@@ -8,11 +8,13 @@ namespace QuizMaker.API.Controllers
     {
         protected readonly IUnitOfWork _quizMakerDb;
         protected readonly IMapper _mapper;
+        protected readonly IQuestionService _questionService;
 
-        public BaseApiController(IUnitOfWork unitOfWork, IMapper mapper)
+        public BaseApiController(IUnitOfWork unitOfWork, IMapper mapper, IQuestionService questionService)
         {
             _quizMakerDb = unitOfWork;
             _mapper = mapper;
+            _questionService = questionService;
         }
     }
 }

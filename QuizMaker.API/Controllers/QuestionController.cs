@@ -11,13 +11,14 @@ using QuizMaker.Core.Interfaces;
 using System.Collections.Generic;
 using System;
 using System.Linq;
+using UseCases.Services;
 
 namespace QuizMaker.API.Controllers
 {
     [RoutePrefix("api/question")]
     public class QuestionController : BaseApiController
     {
-        public QuestionController(IUnitOfWork unitOfWork, IMapper mapper) : base(unitOfWork, mapper)
+        public QuestionController(IUnitOfWork unitOfWork, IMapper mapper, IQuestionService questionService) : base(unitOfWork, mapper, questionService)
         {
         }
 
@@ -44,14 +45,14 @@ namespace QuizMaker.API.Controllers
                     question.QuizQuestions = new List<QuizQuestion> { new QuizQuestion { QuizId = quiz.Id, Question = question } };
                 }
 
-                await _quizMakerDb.Questions.AddAsync(question);
+                _questionService.PrepareQuestion(question);
+                _quizMakerDb.Questions.Add(question);
                 await _quizMakerDb.CompleteAsync();
 
                 return Request.CreateResponse(HttpStatusCode.Created, _mapper.Map<QuestionDetailDTO>(question));
             }
             catch (DbUpdateException ex)
             {
-                // Provjera unutarnje SQL iznimke
                 var sqlException = ex.GetBaseException() as SqlException;
                 if (sqlException != null)
                 {
@@ -84,9 +85,57 @@ namespace QuizMaker.API.Controllers
             if (question == null)
                 return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Question not found.");
 
+            if (question.DeletedAt.HasValue)
+                return Request.CreateErrorResponse(HttpStatusCode.NotFound, "This question is deleted.");
+
             var questionDetailDto = _mapper.Map<QuestionDetailDTO>(question);
 
             return Request.CreateResponse(HttpStatusCode.OK, questionDetailDto);
+        }
+
+        // DELETE: api/question/{id}
+        [HttpDelete]
+        [Route("{id:int}")]
+        public async Task<HttpResponseMessage> DeleteQuestionAsync(int id)
+        {
+            var question = await _quizMakerDb.Questions.GetByIdAsync(id);
+            if (question == null)
+                return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Question not found.");
+
+            // Provjeri je li pitanje povezano s bilo kojim kvizom (čak i obrisanim kvizovima)
+            if (question.QuizQuestions.Any())
+                return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Question is linked to one or more quizzes and cannot be deleted.");
+
+            // Postavi DeletedAt polje
+            question.DeletedAt = DateTime.UtcNow;
+
+            await _quizMakerDb.CompleteAsync();
+            return Request.CreateResponse(HttpStatusCode.OK, "Question deleted successfully.");
+        }
+
+        // PUT: api/question/{id}
+        [HttpPut]
+        [Route("{id:int}")]
+        public async Task<HttpResponseMessage> EditQuestionAsync(int id, [FromBody] QuestionEditDTO questionEditDto)
+        {
+            if (questionEditDto == null || string.IsNullOrEmpty(questionEditDto.Text) || string.IsNullOrEmpty(questionEditDto.Answer))
+                return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Invalid question data.");
+
+            var question = await _quizMakerDb.Questions.GetByIdAsync(id);
+            if (question == null)
+                return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Question not found.");
+
+            // Provjeri je li pitanje povezano s više od jednog kviza
+            if (question.QuizQuestions.Count > 1)
+                return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Question is linked to multiple quizzes and cannot be edited.");
+
+            // Postavi nove vrijednosti
+            question.Text = questionEditDto.Text;
+            question.Answer = questionEditDto.Answer;
+            question.EditedAt = DateTime.UtcNow;
+
+            await _quizMakerDb.CompleteAsync();
+            return Request.CreateResponse(HttpStatusCode.OK, "Question updated successfully.");
         }
 
         // POST: api/question/{id}/addTags
@@ -125,7 +174,7 @@ namespace QuizMaker.API.Controllers
                     {
                         var newTag = new Tag { Name = tagName };
                         question.TagQuestions.Add(new QuestionTag { Question = question, Tag = newTag });
-                        await _quizMakerDb.Tags.AddAsync(newTag);  // Add new tag to the context
+                        _quizMakerDb.Tags.Add(newTag);  
                     }
                 }
 

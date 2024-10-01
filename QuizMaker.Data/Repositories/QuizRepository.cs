@@ -11,7 +11,6 @@ namespace QuizMaker.Data.Repositories
     {
         public QuizRepository(DbContext context) : base(context) { }
 
-        // Dohvati kvizove sortirane po nazivu
         public async Task<List<Quiz>> GetQuizzesNameSortedAsync(int sortMode, int itemsByPage, int pageNumber)
         {
             return sortMode == 1
@@ -27,7 +26,6 @@ namespace QuizMaker.Data.Repositories
                               .ToListAsync();
         }
 
-        // Dohvati kvizove sortirane po datumu izmjene
         public async Task<List<Quiz>> GetQuizzesModifiedSortedAsync(int sortMode, int itemsByPage, int pageNumber)
         {
             return sortMode == 1
