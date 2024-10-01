@@ -37,5 +37,22 @@ namespace QuizMaker.Data.Repositories
                 .Take(itemsByPage)
                 .ToList();
         }
+
+        public async Task<List<Question>> GetQuestionsByTagsAsync(List<string> tags, int itemsByPage, int pageNumber)
+        {
+            var tagEntities = await _dbSet
+                .Where(t => tags.Contains(t.Name))
+                .Include(t => t.TagQuestions.Select(tq => tq.Question))  
+                .ToListAsync();
+
+            return tagEntities
+                .SelectMany(t => t.TagQuestions)
+                .Where(tq => tq.Question.DeletedAt == null)  
+                .Select(tq => tq.Question)
+                .Distinct()
+                .Skip((pageNumber - 1) * itemsByPage)
+                .Take(itemsByPage)
+                .ToList();
+        }
     }
 }

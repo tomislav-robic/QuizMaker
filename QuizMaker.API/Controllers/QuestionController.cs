@@ -219,5 +219,73 @@ namespace QuizMaker.API.Controllers
                 return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, "An error occurred: " + ex.Message);
             }
         }
+
+        // POST: api/quiz/text-search
+        [HttpPost]
+        [Route("text-search")]
+        public async Task<HttpResponseMessage> GetQuestionsByTextAsync([FromBody] TextSearchPaginationDTO dto)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(dto.SearchText))
+                    return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Search text cannot be empty.");
+
+                var questions = await _quizMakerDb.Questions.GetQuestionsByTextAsync(dto.SearchText, dto.ItemsByPage, dto.PageNumber);
+                var questionDtos = _mapper.Map<List<QuestionSummaryDTO>>(questions);
+
+                return !questionDtos.Any()
+                    ? Request.CreateResponse(HttpStatusCode.OK, "Page is empty.")
+                    : Request.CreateResponse(HttpStatusCode.OK, questionDtos);
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, $"An error occurred: {ex.Message}");
+            }
+        }
+
+        // Sortirano po EditedAt datumu
+        [HttpPost]
+        [Route("modified-sorted")]
+        public async Task<HttpResponseMessage> GetQuestionsModifiedSortedAsync([FromBody] SortedPaginationDTO dto)
+        {
+            try
+            {
+                var questions = await _quizMakerDb.Questions.GetQuestionsModifiedSortedAsync(dto.SortMode, dto.ItemsByPage, dto.PageNumber);
+                var questionDtos = _mapper.Map<List<QuestionSummaryDTO>>(questions);
+
+                return !questionDtos.Any()
+                    ? Request.CreateResponse(HttpStatusCode.OK, "Page is empty.")
+                    : Request.CreateResponse(HttpStatusCode.OK, questionDtos);
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, $"An error occurred: {ex.Message}");
+            }
+        }
+
+        [HttpPost]
+        [Route("byTags")]
+        public async Task<HttpResponseMessage> GetQuestionsByTagsAsync([FromBody] TagsPaginationDTO dto)
+        {
+            try
+            {
+                var tags = dto.Tags.Split(';').Select(tag => tag.Trim()).Where(tag => !string.IsNullOrEmpty(tag)).ToList();
+
+                if (tags.Count == 0)
+                    return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "No valid tags provided.");
+
+                var questions = await _quizMakerDb.Tags.GetQuestionsByTagsAsync(tags, dto.ItemsByPage, dto.PageNumber);
+                var questionDtos = _mapper.Map<List<QuestionSummaryDTO>>(questions);
+
+                if (!questionDtos.Any())
+                    return Request.CreateResponse(HttpStatusCode.OK, "Page is empty.");
+
+                return Request.CreateResponse(HttpStatusCode.OK, questionDtos);
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, $"An error occurred: {ex.Message}");
+            }
+        }
     }
 }

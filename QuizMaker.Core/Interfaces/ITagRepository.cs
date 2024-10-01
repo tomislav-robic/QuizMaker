@@ -8,5 +8,6 @@ namespace QuizMaker.Core.Interfaces
     {
         Task<Dictionary<string, Tag>> GetExistingTagsAsync(IEnumerable<string> tagNames);
         Task<List<Quiz>> GetQuizzesByTagsAsync(List<string> tags, int itemsByPage, int pageNumber);
+        Task<List<Question>> GetQuestionsByTagsAsync(List<string> tags, int itemsByPage, int pageNumber);
     }
 }

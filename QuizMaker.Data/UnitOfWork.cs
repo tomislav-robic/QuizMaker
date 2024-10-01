@@ -2,9 +2,7 @@
 using QuizMaker.Core.Interfaces;
 using QuizMaker.Data.Contexts;
 using QuizMaker.Data.Repositories;
-using System.Data.Entity;
 using System.Threading.Tasks;
-using System.Transactions;
 
 namespace QuizMaker.Data
 {
@@ -14,14 +12,14 @@ namespace QuizMaker.Data
 
         public IQuizRepository Quizzes { get; private set; }
         public ITagRepository Tags { get; private set; }
-        public IRepository<Question> Questions { get; private set; }
+        public IQuestionRepository Questions { get; private set; }
 
         public UnitOfWork(QuizMakerContext context)
         {
             _context = context;
             Quizzes = new QuizRepository(_context);
             Tags = new TagRepository(_context);
-            Questions = new Repository<Question>(_context);
+            Questions = new QuestionRepository(_context);
         }
 
         public ITransaction BeginTransaction()

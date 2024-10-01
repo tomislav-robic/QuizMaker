@@ -8,7 +8,7 @@ namespace QuizMaker.Core.Interfaces
     {
         IQuizRepository Quizzes { get; }
         ITagRepository Tags { get; }
-        IRepository<Question> Questions { get; }
+        IQuestionRepository Questions { get; }
         Task<int> CompleteAsync();
         ITransaction BeginTransaction();
     }

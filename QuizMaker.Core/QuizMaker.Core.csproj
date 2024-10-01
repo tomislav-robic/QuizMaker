@@ -60,12 +60,14 @@
     <Compile Include="DTOs\TagSummaryDTO.cs" />
     <Compile Include="DTOs\TagToQuestionDTO.cs" />
     <Compile Include="DTOs\TagToQuizDTO.cs" />
+    <Compile Include="DTOs\TextSearchPaginationDTO.cs" />
     <Compile Include="Entities\Question.cs" />
     <Compile Include="Entities\QuestionTag.cs" />
     <Compile Include="Entities\Quiz.cs" />
     <Compile Include="Entities\QuizQuestion.cs" />
     <Compile Include="Entities\QuizTag.cs" />
     <Compile Include="Entities\Tag.cs" />
+    <Compile Include="Interfaces\IQuestionRepository.cs" />
     <Compile Include="Interfaces\IQuestionService.cs" />
     <Compile Include="Interfaces\IQuizRepository.cs" />
     <Compile Include="Interfaces\IRepository.cs" />
