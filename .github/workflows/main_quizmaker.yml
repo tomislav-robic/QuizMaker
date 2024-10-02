@@ -1,6 +1,3 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
 name: Build and deploy ASP app to Azure Web App - QuizMaker
 
 on:
@@ -12,6 +9,9 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+    permissions:
+      contents: read
+      id-token: write  # Pravilno postavljene permisije
 
     steps:
       - uses: actions/checkout@v4
@@ -29,22 +29,21 @@ jobs:
         run: msbuild QuizMaker.sln /p:Configuration=Release /p:DeployOnBuild=true /p:PublishUrl="published" /p:TargetFrameworkVersion=v4.8
 
       - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ASP-app
-          path: 'published/**'  # Ako ovo nije točna putanja, izmijenite prema potrebi
+          path: 'published/**'
 
   deploy:
     runs-on: windows-latest
     needs: build
     environment:
       name: 'Production'
-    permissions:
-      id-token: write
 
-      - name: Downlod Artifacts 
-        uses: actions/download-artifact@v3
-
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        
       - name: List Files
         run: ls -R
 
