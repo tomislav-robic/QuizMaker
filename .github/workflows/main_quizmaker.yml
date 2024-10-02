@@ -32,24 +32,22 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ASP-app
-          path: 'published/**'
+          path: 'published/**'  # Ako ovo nije točna putanja, izmijenite prema potrebi
 
   deploy:
     runs-on: windows-latest
     needs: build
     environment:
       name: 'Production'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     permissions:
-      id-token: write #This is required for requesting the JWT
+      id-token: write
 
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: ASP-app
-          path: 'published/**'
-      
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -58,9 +56,8 @@ jobs:
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_292B15FB23714676AAFF35B2F696A3CE }}
 
       - name: Deploy to Azure Web App
-        id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'QuizMaker'
           slot-name: 'Production'
-          package: .
+          package: './ASP-app'
