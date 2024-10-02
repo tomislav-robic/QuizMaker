@@ -42,11 +42,11 @@ jobs:
     permissions:
       id-token: write
 
-    steps:
-      - name: Download artifact from build job
+      - name: Downlod Artifacts 
         uses: actions/download-artifact@v3
-        with:
-          name: ASP-app
+
+      - name: List Files
+        run: ls -R
 
       - name: Login to Azure
         uses: azure/login@v2
