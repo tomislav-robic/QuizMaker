@@ -125,7 +125,9 @@ namespace QuizMaker.API.Controllers
 
                 await _quizMakerDb.CompleteAsync();
 
-                return Request.CreateResponse(HttpStatusCode.OK, quiz);
+                var quizSummaryDto = _mapper.Map<QuizSummaryDTO>(quiz);
+
+                return Request.CreateResponse(HttpStatusCode.OK, quizSummaryDto);
             }
             catch (Exception ex)
             {
@@ -421,7 +423,7 @@ namespace QuizMaker.API.Controllers
             }
         }
 
-        // GET: api/quiz/byTags
+        // GET: api/quiz/export/formats
         [HttpGet]
         [Route("export/formats")]
         public HttpResponseMessage GetAvailableExportFormats()
@@ -430,7 +432,7 @@ namespace QuizMaker.API.Controllers
             return Request.CreateResponse(HttpStatusCode.OK, formats);
         }
 
-        // GET: api/quiz/export/{quizId}
+        // GET: api/quiz/export/{quizId}?format={format}
         [HttpGet]
         [Route("export/{quizId}")]
         public async Task<HttpResponseMessage> ExportQuizAsync(int quizId, string format)

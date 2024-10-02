@@ -7,8 +7,11 @@
     {
         public override void Up()
         {
-            //Napomena : CREATE FULLTEXT CATALOG QuizMakerFullTextCatalog AS DEFAULT; se je moralo ručno izvršiti na bazi jer EF to ne podržava...
-            // Kreiranje Full-Text indeksa na `Text` koloni u `Questions` tablici
+            // Note: `CREATE FULLTEXT CATALOG QuizMakerFullTextCatalog AS DEFAULT;` needed to be manually executed on the database since EF does not support it.
+            // Create Full-Text index on the `Text` column in the `Questions` table
+
+            // If Full-Text index is not installed on the server, comment out this part.
+            
             Sql(@"CREATE FULLTEXT INDEX ON Questions(Text) 
               KEY INDEX [PK_dbo.Questions] 
               ON QuizMakerFullTextCatalog 
@@ -17,7 +20,10 @@
         
         public override void Down()
         {
-            // Uklanjanje Full-Text indeksa i kataloga
+            // Removing the Full-Text index and catalog
+
+            // If Full-Text index is not installed on the server, comment out this part.
+
             Sql("DROP FULLTEXT INDEX ON Questions;");
         }
     }

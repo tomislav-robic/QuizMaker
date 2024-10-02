@@ -11,7 +11,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuizMaker.Core", "QuizMaker
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuizMaker.Data", "QuizMaker.Data\QuizMaker.Data.csproj", "{7CEB9F0F-4927-4EAC-8ECD-4A2F9C1FDA61}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UseCases", "UseCases\UseCases.csproj", "{8C974AAA-1BB8-4E49-9350-999558C92CAE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuizMaker.UseCases", "UseCases\QuizMaker.UseCases.csproj", "{8C974AAA-1BB8-4E49-9350-999558C92CAE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

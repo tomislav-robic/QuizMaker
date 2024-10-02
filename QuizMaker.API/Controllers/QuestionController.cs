@@ -102,15 +102,39 @@ namespace QuizMaker.API.Controllers
             if (question == null)
                 return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Question not found.");
 
-            // Provjeri je li pitanje povezano s bilo kojim kvizom (čak i obrisanim kvizovima)
             if (question.QuizQuestions.Any())
                 return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Question is linked to one or more quizzes and cannot be deleted.");
 
-            // Postavi DeletedAt polje
             question.DeletedAt = DateTime.UtcNow;
 
             await _quizMakerDb.CompleteAsync();
             return Request.CreateResponse(HttpStatusCode.OK, "Question deleted successfully.");
+        }
+
+        // POST: api/question/{id}/revive
+        [HttpPost]
+        [Route("{id:int}/revive")]
+        public async Task<HttpResponseMessage> ReviveQuestionAsync(int id)
+        {
+            try
+            {
+                var question = await _quizMakerDb.Questions.GetByIdAsync(id);
+
+                if (question == null)
+                    return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Question not found.");
+
+                if (question.DeletedAt == null)
+                    return Request.CreateResponse(HttpStatusCode.BadRequest, "Question is not deleted.");
+
+                question.DeletedAt = null;
+                await _quizMakerDb.CompleteAsync();
+
+                return Request.CreateResponse(HttpStatusCode.OK, "Question revived successfully.");
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, $"An error occurred: {ex.Message}");
+            }
         }
 
         // PUT: api/question/{id}
@@ -125,11 +149,9 @@ namespace QuizMaker.API.Controllers
             if (question == null)
                 return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Question not found.");
 
-            // Provjeri je li pitanje povezano s više od jednog kviza
             if (question.QuizQuestions.Count > 1)
                 return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Question is linked to multiple quizzes and cannot be edited.");
 
-            // Postavi nove vrijednosti
             question.Text = questionEditDto.Text;
             question.Answer = questionEditDto.Answer;
             question.EditedAt = DateTime.UtcNow;
@@ -220,7 +242,7 @@ namespace QuizMaker.API.Controllers
             }
         }
 
-        // POST: api/quiz/text-search
+        // POST: api/question/text-search
         [HttpPost]
         [Route("text-search")]
         public async Task<HttpResponseMessage> GetQuestionsByTextAsync([FromBody] TextSearchPaginationDTO dto)
@@ -243,19 +265,29 @@ namespace QuizMaker.API.Controllers
             }
         }
 
-        // Sortirano po EditedAt datumu
+        // POST: api/question/modified-sorted
         [HttpPost]
         [Route("modified-sorted")]
         public async Task<HttpResponseMessage> GetQuestionsModifiedSortedAsync([FromBody] SortedPaginationDTO dto)
         {
             try
             {
+                if (dto.SortMode != 1 && dto.SortMode != 2)
+                    return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Invalid sortMode. Use 1 for ascending, 2 for descending.");
+
+                if (dto.ItemsByPage <= 0)
+                    return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "ItemsByPage must be greater than zero.");
+                if (dto.PageNumber <= 0)
+                    return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "PageNumber must be greater than zero.");
+
                 var questions = await _quizMakerDb.Questions.GetQuestionsModifiedSortedAsync(dto.SortMode, dto.ItemsByPage, dto.PageNumber);
+
                 var questionDtos = _mapper.Map<List<QuestionSummaryDTO>>(questions);
 
-                return !questionDtos.Any()
-                    ? Request.CreateResponse(HttpStatusCode.OK, "Page is empty.")
-                    : Request.CreateResponse(HttpStatusCode.OK, questionDtos);
+                if (!questionDtos.Any())
+                    return Request.CreateResponse(HttpStatusCode.OK, "Page is empty.");
+
+                return Request.CreateResponse(HttpStatusCode.OK, questionDtos);
             }
             catch (Exception ex)
             {
@@ -263,18 +295,31 @@ namespace QuizMaker.API.Controllers
             }
         }
 
+        // POST: api/question/byTags
         [HttpPost]
         [Route("byTags")]
         public async Task<HttpResponseMessage> GetQuestionsByTagsAsync([FromBody] TagsPaginationDTO dto)
         {
             try
             {
-                var tags = dto.Tags.Split(';').Select(tag => tag.Trim()).Where(tag => !string.IsNullOrEmpty(tag)).ToList();
+                if (string.IsNullOrEmpty(dto.Tags))
+                    return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "No tags provided.");
 
-                if (tags.Count == 0)
+                var tagList = dto.Tags.Split(';')
+                                      .Select(tag => tag.Trim())
+                                      .Where(tag => !string.IsNullOrEmpty(tag))
+                                      .ToList();
+
+                if (!tagList.Any())
                     return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "No valid tags provided.");
 
-                var questions = await _quizMakerDb.Tags.GetQuestionsByTagsAsync(tags, dto.ItemsByPage, dto.PageNumber);
+                if (dto.ItemsByPage <= 0)
+                    return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "ItemsByPage must be greater than zero.");
+                if (dto.PageNumber <= 0)
+                    return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "PageNumber must be greater than zero.");
+
+                var questions = await _quizMakerDb.Tags.GetQuestionsByTagsAsync(tagList, dto.ItemsByPage, dto.PageNumber);
+
                 var questionDtos = _mapper.Map<List<QuestionSummaryDTO>>(questions);
 
                 if (!questionDtos.Any())
