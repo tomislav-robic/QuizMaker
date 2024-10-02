@@ -1,7 +1,7 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy ASP app to Azure Web App - QuizMaker
+name: Build and deploy ASP.NET app to Azure Web App - QuizMaker
 
 on:
   push:
@@ -22,14 +22,14 @@ jobs:
       - name: Setup NuGet
         uses: NuGet/setup-nuget@v1.0.5
 
-    - name: Restore NuGet packages
-      run: nuget restore QuizMaker.sln -PackagesDirectory ./packages
+      - name: Restore NuGet packages
+        run: nuget restore QuizMaker.sln -PackagesDirectory ./packages
 
       - name: Publish to folder
         run: msbuild QuizMaker.sln /p:Configuration=Release /p:DeployOnBuild=true /p:PublishProfile=FolderProfile /p:OutputPath=published
 
       - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v2
         with:
           name: ASP-app
           path: published/**
@@ -42,22 +42,18 @@ jobs:
 
     steps:
       - name: Download artifact from build job
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v2
         with:
           name: ASP-app
 
       - name: Login to Azure
-        uses: azure/login@v2
+        uses: azure/login@v1
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_19881985C1144AA9927AB5C188CA7023 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_038A2E0A208F4A9EAC653FC4254C2768 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_292B15FB23714676AAFF35B2F696A3CE }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v3
+        uses: azure/webapps-deploy@v2
         with:
           app-name: 'QuizMaker'
           slot-name: 'Production'
-          package: .
-
-          
+          package: './ASP-app'
