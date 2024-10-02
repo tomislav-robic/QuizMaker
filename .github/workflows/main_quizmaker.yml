@@ -25,14 +25,14 @@ jobs:
       - name: Restore NuGet packages
         run: nuget restore
 
-        - name: Publish to folder
-          run: msbuild QuizMaker.API.csproj /p:Configuration=Release /p:DeployOnBuild=true /p:PublishUrl="published"
+      - name: Publish to folder
+        run: msbuild QuizMaker.API.csproj /p:Configuration=Release /p:DeployOnBuild=true /p:PublishUrl="published"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: ASP-app
-          path: '/published/**'
+          path: 'published/**'
 
   deploy:
     runs-on: windows-latest
