@@ -29,7 +29,7 @@ jobs:
         run: msbuild QuizMaker.sln /p:Configuration=Release /p:DeployOnBuild=true /p:PublishUrl="published" /p:TargetFrameworkVersion=v4.8
 
       - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: ASP-app
           path: 'published/**'  # Ako ovo nije točna putanja, izmijenite prema potrebi
@@ -44,7 +44,7 @@ jobs:
 
     steps:
       - name: Download artifact from build job
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v3
         with:
           name: ASP-app
 
