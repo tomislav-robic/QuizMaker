@@ -9,7 +9,7 @@ public class QuestionRepository : Repository<Question>, IQuestionRepository
 {
     public QuestionRepository(DbContext context) : base(context) { }
 
-    // Full-Text pretraga po tekstu s paginacijom
+    // Full-Text search by text with pagination
     public async Task<List<Question>> GetQuestionsByTextAsync(string searchText, int itemsByPage, int pageNumber)
     {
         return await _dbSet
@@ -20,7 +20,7 @@ public class QuestionRepository : Repository<Question>, IQuestionRepository
             .ToListAsync();
     }
 
-    // Dohvati pitanja sortirana prema datumu izmjene (EditedAt)
+    // Retrieve questions sorted by edited date (EditedAt)
     public async Task<List<Question>> GetQuestionsModifiedSortedAsync(int sortMode, int itemsByPage, int pageNumber)
     {
         return sortMode == 1
@@ -36,7 +36,7 @@ public class QuestionRepository : Repository<Question>, IQuestionRepository
                           .ToListAsync();
     }
 
-    // Dohvati pitanja prema tagovima s paginacijom
+    // Retrieve questions by tags with pagination
     public async Task<List<Question>> GetQuestionsByTagsAsync(List<string> tags, int itemsByPage, int pageNumber)
     {
         var tagEntities = await _context.Set<Tag>()
