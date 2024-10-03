@@ -3,6 +3,7 @@ using System.Configuration;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Owin;
+using Microsoft.Owin.Cors;
 using Microsoft.Owin.Security.Jwt;
 using Owin;
 
@@ -14,6 +15,8 @@ namespace QuizMaker.API
     {
         public void Configuration(IAppBuilder app)
         {
+            app.UseCors(CorsOptions.AllowAll);
+
             var issuer = ConfigurationManager.AppSettings["Issuer"];
             var audience = ConfigurationManager.AppSettings["Audience"];
             var secret = Encoding.UTF8.GetBytes(ConfigurationManager.AppSettings["JwtSecret"]);

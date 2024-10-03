@@ -1,7 +1,6 @@
 ﻿using QuizMaker.Core.DTOs;
 using QuizMaker.Core.Interfaces;
 using System.Web.Http;
-using System.IdentityModel.Tokens.Jwt;
 
 namespace QuizMaker.API.Controllers
 {
@@ -22,7 +21,7 @@ namespace QuizMaker.API.Controllers
         {
             if (loginDto == null || string.IsNullOrEmpty(loginDto.Username) || string.IsNullOrEmpty(loginDto.Password))
             {
-                return BadRequest("Korisničko ime i lozinka su obavezni.");
+                return BadRequest("Username and password are required.");
             }
 
             var token = _authService.Authenticate(loginDto.Username, loginDto.Password);

@@ -95,17 +95,27 @@ namespace QuizMaker.API.Controllers
         [Route("{id:int}")]
         public async Task<HttpResponseMessage> GetQuizAsync(int id)
         {
-            var quiz = await _quizMakerDb.Quizzes.GetByIdAsync(id);
+            try
+            {
+                var quiz = await _quizMakerDb.Quizzes.GetByIdAsync(id);
 
-            if (quiz == null)
-                return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Quiz not found.");
+                throw new Exception("Test kviz");
 
-            if (quiz.DeletedAt != null)
-                return Request.CreateErrorResponse(HttpStatusCode.NotFound, "This quiz is deleted.");
+                if (quiz == null)
+                    return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Quiz not found.");
 
-            var quizDetailDto = _mapper.Map<QuizDetailDTO>(quiz);
+                if (quiz.DeletedAt != null)
+                    return Request.CreateErrorResponse(HttpStatusCode.NotFound, "This quiz is deleted.");
 
-            return Request.CreateResponse(HttpStatusCode.OK, quizDetailDto);
+                var quizDetailDto = _mapper.Map<QuizDetailDTO>(quiz);
+
+                return Request.CreateResponse(HttpStatusCode.OK, quizDetailDto);
+            }
+            catch (Exception ex)
+            {
+                LogError(ex);
+                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, $"An error occurred: {ex.Message}");
+            }
         }
 
         // PUT: api/quiz/{id}
