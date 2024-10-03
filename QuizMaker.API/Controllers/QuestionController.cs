@@ -11,7 +11,6 @@ using QuizMaker.Core.Interfaces;
 using System.Collections.Generic;
 using System;
 using System.Linq;
-using UseCases.Services;
 
 namespace QuizMaker.API.Controllers
 {
@@ -53,6 +52,7 @@ namespace QuizMaker.API.Controllers
             }
             catch (DbUpdateException ex)
             {
+                LogError(ex);
                 var sqlException = ex.GetBaseException() as SqlException;
                 if (sqlException != null)
                 {
@@ -71,6 +71,7 @@ namespace QuizMaker.API.Controllers
             catch (Exception ex)
             {
                 // Catch all other errors
+                LogError(ex);
                 return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, "An error occurred: " + ex.Message);
             }
         }
@@ -83,8 +84,6 @@ namespace QuizMaker.API.Controllers
             try
             {
                 var question = await _quizMakerDb.Questions.GetByIdAsync(id);
-
-                throw new Exception("Test pitanje");
 
                 if (question == null)
                     return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Question not found.");
@@ -108,17 +107,25 @@ namespace QuizMaker.API.Controllers
         [Route("{id:int}")]
         public async Task<HttpResponseMessage> DeleteQuestionAsync(int id)
         {
-            var question = await _quizMakerDb.Questions.GetByIdAsync(id);
-            if (question == null)
-                return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Question not found.");
+            try
+            {
+                var question = await _quizMakerDb.Questions.GetByIdAsync(id);
+                if (question == null)
+                    return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Question not found.");
 
-            if (question.QuizQuestions.Any())
-                return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Question is linked to one or more quizzes and cannot be deleted.");
+                if (question.QuizQuestions.Any())
+                    return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Question is linked to one or more quizzes and cannot be deleted.");
 
-            question.DeletedAt = DateTime.UtcNow;
+                question.DeletedAt = DateTime.UtcNow;
 
-            await _quizMakerDb.CompleteAsync();
-            return Request.CreateResponse(HttpStatusCode.OK, "Question deleted successfully.");
+                await _quizMakerDb.CompleteAsync();
+                return Request.CreateResponse(HttpStatusCode.OK, "Question deleted successfully.");
+            }
+            catch (Exception ex)
+            {
+                LogError(ex);
+                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, $"An error occurred: {ex.Message}");
+            }
         }
 
         // POST: api/question/{id}/revive
@@ -143,6 +150,7 @@ namespace QuizMaker.API.Controllers
             }
             catch (Exception ex)
             {
+                LogError(ex);
                 return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, $"An error occurred: {ex.Message}");
             }
         }
@@ -152,22 +160,30 @@ namespace QuizMaker.API.Controllers
         [Route("{id:int}")]
         public async Task<HttpResponseMessage> EditQuestionAsync(int id, [FromBody] QuestionEditDTO questionEditDto)
         {
-            if (questionEditDto == null || string.IsNullOrEmpty(questionEditDto.Text) || string.IsNullOrEmpty(questionEditDto.Answer))
-                return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Invalid question data.");
+            try
+            {
+                if (questionEditDto == null || string.IsNullOrEmpty(questionEditDto.Text) || string.IsNullOrEmpty(questionEditDto.Answer))
+                    return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Invalid question data.");
 
-            var question = await _quizMakerDb.Questions.GetByIdAsync(id);
-            if (question == null)
-                return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Question not found.");
+                var question = await _quizMakerDb.Questions.GetByIdAsync(id);
+                if (question == null)
+                    return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Question not found.");
 
-            if (question.QuizQuestions.Count > 1)
-                return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Question is linked to multiple quizzes and cannot be edited.");
+                if (question.QuizQuestions.Count > 1)
+                    return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Question is linked to multiple quizzes and cannot be edited.");
 
-            question.Text = questionEditDto.Text;
-            question.Answer = questionEditDto.Answer;
-            question.EditedAt = DateTime.UtcNow;
+                question.Text = questionEditDto.Text;
+                question.Answer = questionEditDto.Answer;
+                question.EditedAt = DateTime.UtcNow;
 
-            await _quizMakerDb.CompleteAsync();
-            return Request.CreateResponse(HttpStatusCode.OK, "Question updated successfully.");
+                await _quizMakerDb.CompleteAsync();
+                return Request.CreateResponse(HttpStatusCode.OK, "Question updated successfully.");
+            }
+            catch (Exception ex)
+            {
+                LogError(ex);
+                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, $"An error occurred: {ex.Message}");
+            }
         }
 
         // POST: api/question/{id}/addTags
@@ -215,6 +231,7 @@ namespace QuizMaker.API.Controllers
             }
             catch (Exception ex)
             {
+                LogError(ex);
                 return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, $"An error occurred: {ex.Message}");
             }
         }
@@ -248,6 +265,7 @@ namespace QuizMaker.API.Controllers
             }
             catch (Exception ex)
             {
+                LogError(ex);
                 return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, "An error occurred: " + ex.Message);
             }
         }
@@ -271,6 +289,7 @@ namespace QuizMaker.API.Controllers
             }
             catch (Exception ex)
             {
+                LogError(ex);
                 return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, $"An error occurred: {ex.Message}");
             }
         }
@@ -301,6 +320,7 @@ namespace QuizMaker.API.Controllers
             }
             catch (Exception ex)
             {
+                LogError(ex);
                 return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, $"An error occurred: {ex.Message}");
             }
         }
@@ -339,6 +359,7 @@ namespace QuizMaker.API.Controllers
             }
             catch (Exception ex)
             {
+                LogError(ex);
                 return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, $"An error occurred: {ex.Message}");
             }
         }

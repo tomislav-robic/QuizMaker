@@ -11,7 +11,6 @@ using System.Net.Http;
 using System.Web.Http;
 using System.Linq;
 using System.Threading.Tasks;
-using UseCases.Services;
 
 namespace QuizMaker.API.Controllers
 {
@@ -66,6 +65,7 @@ namespace QuizMaker.API.Controllers
                 }
                 catch (DbUpdateException ex)
                 {
+                    LogError(ex);
                     transaction.Rollback(); 
                     var sqlException = ex.GetBaseException() as SqlException;
                     if (sqlException != null)
@@ -84,6 +84,7 @@ namespace QuizMaker.API.Controllers
                 }
                 catch (Exception ex)
                 {
+                    LogError(ex);
                     transaction.Rollback(); 
                     return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, "An error occurred: " + ex.Message);
                 }
@@ -98,8 +99,6 @@ namespace QuizMaker.API.Controllers
             try
             {
                 var quiz = await _quizMakerDb.Quizzes.GetByIdAsync(id);
-
-                throw new Exception("Test kviz");
 
                 if (quiz == null)
                     return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Quiz not found.");
@@ -141,6 +140,7 @@ namespace QuizMaker.API.Controllers
             }
             catch (Exception ex)
             {
+                LogError(ex);
                 return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, $"An error occurred: {ex.Message}");
             }
         }
@@ -177,6 +177,7 @@ namespace QuizMaker.API.Controllers
             }
             catch (Exception ex)
             {
+                LogError(ex);
                 return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, "An error occurred: " + ex.Message);
             }
         }
@@ -210,6 +211,7 @@ namespace QuizMaker.API.Controllers
             }
             catch (Exception ex)
             {
+                LogError(ex);
                 return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, "An error occurred: " + ex.Message);
             }
         }
@@ -234,6 +236,7 @@ namespace QuizMaker.API.Controllers
             }
             catch (Exception ex)
             {
+                LogError(ex);
                 return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, $"An error occurred: {ex.Message}");
             }
         }
@@ -260,6 +263,7 @@ namespace QuizMaker.API.Controllers
             }
             catch (Exception ex)
             {
+                LogError(ex);
                 return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, $"An error occurred: {ex.Message}");
             }
         }
@@ -313,6 +317,7 @@ namespace QuizMaker.API.Controllers
             }
             catch (Exception ex)
             {
+                LogError(ex);
                 return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, $"An error occurred: {ex.Message}");
             }
         }
@@ -346,6 +351,7 @@ namespace QuizMaker.API.Controllers
             }
             catch (Exception ex)
             {
+                LogError(ex);
                 return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, "An error occurred: " + ex.Message);
             }
         }
@@ -371,6 +377,7 @@ namespace QuizMaker.API.Controllers
             }
             catch (Exception ex)
             {
+                LogError(ex);
                 return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, $"An error occurred: {ex.Message}");
             }
         }
@@ -396,6 +403,7 @@ namespace QuizMaker.API.Controllers
             }
             catch (Exception ex)
             {
+                LogError(ex);
                 return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, $"An error occurred: {ex.Message}");
             }
         }
@@ -429,6 +437,7 @@ namespace QuizMaker.API.Controllers
             }
             catch (Exception ex)
             {
+                LogError(ex);
                 return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, $"An error occurred: {ex.Message}");
             }
         }
@@ -437,9 +446,16 @@ namespace QuizMaker.API.Controllers
         [HttpGet]
         [Route("export/formats")]
         public HttpResponseMessage GetAvailableExportFormats()
-        {
-            var formats = _exportService.Exporters.Select(e => new { e.ExportFormat, e.FileExtension });
-            return Request.CreateResponse(HttpStatusCode.OK, formats);
+        {   try
+            {
+                var formats = _exportService.Exporters.Select(e => new { e.ExportFormat, e.FileExtension });
+                return Request.CreateResponse(HttpStatusCode.OK, formats);
+            }
+            catch (Exception ex)
+            {
+                LogError(ex);
+                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, $"An error occurred: {ex.Message}");
+            }
         }
 
         // GET: api/quiz/export/{quizId}?format={format}
@@ -447,29 +463,37 @@ namespace QuizMaker.API.Controllers
         [Route("export/{quizId}")]
         public async Task<HttpResponseMessage> ExportQuizAsync(int quizId, string format)
         {
-            if (string.IsNullOrEmpty(format))
-                return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Export format is required.");
-
-            var quiz = await _quizMakerDb.Quizzes.GetByIdAsync(quizId);
-            if (quiz == null || quiz.DeletedAt != null)
-                return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Quiz not found or deleted.");
-
-            var exporter = _exportService.GetExporter(format);
-            if (exporter == null)
-                return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Unsupported export format.");
-
-            var fileContent = exporter.ExportQuiz(quiz);
-            var result = new HttpResponseMessage(HttpStatusCode.OK)
+            try
             {
-                Content = new ByteArrayContent(fileContent)
-            };
-            result.Content.Headers.ContentDisposition = new System.Net.Http.Headers.ContentDispositionHeaderValue("attachment")
-            {
-                FileName = $"{quiz.Name}_{DateTime.UtcNow:yyyyMMddHHmmss}{exporter.FileExtension}"
-            };
-            result.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+                if (string.IsNullOrEmpty(format))
+                    return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Export format is required.");
 
-            return result;
+                var quiz = await _quizMakerDb.Quizzes.GetByIdAsync(quizId);
+                if (quiz == null || quiz.DeletedAt != null)
+                    return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Quiz not found or deleted.");
+
+                var exporter = _exportService.GetExporter(format);
+                if (exporter == null)
+                    return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Unsupported export format.");
+
+                var fileContent = exporter.ExportQuiz(quiz);
+                var result = new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new ByteArrayContent(fileContent)
+                };
+                result.Content.Headers.ContentDisposition = new System.Net.Http.Headers.ContentDispositionHeaderValue("attachment")
+                {
+                    FileName = $"{quiz.Name}_{DateTime.UtcNow:yyyyMMddHHmmss}{exporter.FileExtension}"
+                };
+                result.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                LogError(ex);
+                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, $"An error occurred: {ex.Message}");
+            }
         }
     }
 }
