@@ -18,11 +18,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Build Tools
-        uses: microsoft/visualstudio-dotnet-buildtools-hosted@v1
-        with:
-          vs-version: '2019'
-          workload-ids: 'Microsoft.VisualStudio.Workload.ManagedDesktop'
+      - name: Install Chocolatey
+        run: |
+          Set-ExecutionPolicy Bypass -Scope Process -Force; `
+          [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; `
+          iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+
+      - name: Install Visual Studio Build Tools
+        run: |
+          choco install visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.WebBuildTools --includeRecommended --includeOptional" --yes
 
       - name: Setup MSBuild path
         uses: microsoft/setup-msbuild@v1.0.2
@@ -33,8 +37,11 @@ jobs:
       - name: Restore NuGet packages
         run: nuget restore QuizMaker.sln
 
-      - name: Publish to folder
-        run: msbuild QuizMaker.sln /p:Configuration=Release /p:DeployOnBuild=true /p:PublishUrl="published" /p:TargetFrameworkVersion=v4.8
+      - name: Build Solution
+        run: msbuild QuizMaker.sln /p:Configuration=Release /p:TargetFrameworkVersion=v4.8
+
+      - name: Publish Project
+        run: msbuild QuizMaker.API/QuizMaker.API.csproj /p:Configuration=Release /p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=false /p:OutDir="published"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -51,6 +58,8 @@ jobs:
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
+        with:
+          name: ASP-app
 
       - name: List Files
         run: dir
@@ -67,4 +76,4 @@ jobs:
         with:
           app-name: 'QuizMaker'
           slot-name: 'Production'
-          package: 'published'
+          package: 'ASP-app'
