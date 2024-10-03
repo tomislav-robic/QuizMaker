@@ -46,6 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DTOs\AddTagsDTO.cs" />
+    <Compile Include="DTOs\LoginDto.cs" />
     <Compile Include="DTOs\QuestionCreateDTO.cs" />
     <Compile Include="DTOs\QuestionDetailDTO.cs" />
     <Compile Include="DTOs\QuestionEditDTO.cs" />
@@ -68,6 +69,7 @@
     <Compile Include="Entities\QuizQuestion.cs" />
     <Compile Include="Entities\QuizTag.cs" />
     <Compile Include="Entities\Tag.cs" />
+    <Compile Include="Interfaces\IAuthService.cs" />
     <Compile Include="Interfaces\IExporter.cs" />
     <Compile Include="Interfaces\IExportService.cs" />
     <Compile Include="Interfaces\IQuestionRepository.cs" />

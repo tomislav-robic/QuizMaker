@@ -4,6 +4,7 @@ using System.Web.Http;
 
 namespace QuizMaker.API.Controllers
 {
+    [Authorize]
     public class BaseApiController : ApiController
     {
         protected readonly IUnitOfWork _quizMakerDb;
