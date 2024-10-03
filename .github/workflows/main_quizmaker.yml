@@ -33,15 +33,20 @@ jobs:
 
       - name: Setup NuGet
         uses: NuGet/setup-nuget@v1.0.5
+        with:
+          nuget-version: '5.11.0'
 
       - name: Restore NuGet packages
-        run: nuget restore QuizMaker.sln
+        run: nuget restore QuizMaker.sln -NonInteractive -Verbosity detailed
+
+      - name: List packages folder
+        run: dir packages
 
       - name: Build Solution
-        run: msbuild QuizMaker.sln /p:Configuration=Release /p:TargetFrameworkVersion=v4.8
+        run: msbuild QuizMaker.sln /p:Configuration=Release /p:TargetFrameworkVersion=v4.8 /p:RestorePackagesConfig=true
 
       - name: Publish Project
-        run: msbuild QuizMaker.API/QuizMaker.API.csproj /p:Configuration=Release /p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=false /p:OutDir="published"
+        run: msbuild QuizMaker.API/QuizMaker.API.csproj /p:Configuration=Release /p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=false /p:OutDir="published" /p:TargetFrameworkVersion=v4.8 /p:RestorePackagesConfig=true
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
