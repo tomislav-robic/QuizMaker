@@ -17,8 +17,7 @@ namespace UseCases.Services
             var sb = new StringBuilder();
 
             sb.AppendLine($"Quiz: {quiz.Name}");
-            sb.AppendLine(); 
-
+            sb.AppendLine();
             sb.AppendLine("Questions:");
 
             foreach (var question in quiz.QuizQuestions.Select(qq => qq.Question))
@@ -26,7 +25,13 @@ namespace UseCases.Services
                 sb.AppendLine($"{question.Text}");
             }
 
-            return Encoding.UTF8.GetBytes(sb.ToString());
+            byte[] utfBytes = Encoding.UTF8.GetBytes(sb.ToString());
+            byte[] bom = new byte[] { 0xEF, 0xBB, 0xBF };
+            byte[] exportData = new byte[bom.Length + utfBytes.Length];
+            bom.CopyTo(exportData, 0);
+            utfBytes.CopyTo(exportData, bom.Length);
+
+            return exportData;
         }
     }
 }
