@@ -481,10 +481,11 @@ namespace QuizMaker.API.Controllers
                 {
                     Content = new ByteArrayContent(fileContent)
                 };
-                result.Content.Headers.ContentDisposition = new System.Net.Http.Headers.ContentDispositionHeaderValue("attachment")
-                {
-                    FileName = $"{quiz.Name}_{DateTime.UtcNow:yyyyMMddHHmmss}{exporter.FileExtension}"
-                };
+                //result.Content.Headers.ContentDisposition = new System.Net.Http.Headers.ContentDispositionHeaderValue("attachment")
+                //{
+                //    FileName = $"{quiz.Name}_{DateTime.UtcNow:yyyyMMddHHmmss}{exporter.FileExtension}"
+                //};
+                result.Content.Headers.Add("Content-Disposition", $"attachment; filename=\"{quiz.Name}_{DateTime.UtcNow:yyyyMMddHHmmss}{exporter.FileExtension}\"");
                 result.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
 
                 return result;
